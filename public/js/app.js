@@ -61,4 +61,13 @@
       row.hidden = !row.dataset.foodName.includes(term)
     })
   })
+
+  const patientShell = document.querySelector('[data-patient-theme]')
+  const themeButton = document.querySelector('[data-theme-toggle]')
+  const savedTheme = localStorage.getItem('patient-theme')
+  if (patientShell && savedTheme === 'dark') patientShell.classList.add('is-dark')
+  themeButton?.addEventListener('click', () => {
+    const dark = patientShell?.classList.toggle('is-dark') ?? false
+    localStorage.setItem('patient-theme', dark ? 'dark' : 'light')
+  })
 })()

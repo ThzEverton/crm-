@@ -1,0 +1,15 @@
+import type { Request, Response } from 'express'
+import { ZodError } from 'zod'
+import type { AuthService } from '../services/auth.service.js'
+import { loginSchema, recoverySchema, resetSchema } from '../validators/auth.validator.js'
+
+export class AuthController {
+  constructor(private readonly service: AuthService) {}
+  loginPage = (request: Request, response: Response): void => { if (request.session.user) { response.redirect(request.session.user.role === 'patient' ? '/patient-app' : '/'); return }; response.render('auth/login', { layout: false, pageTitle: 'Entrar', errorMessage: typeof request.query.error === 'string' ? request.query.error : '', notice: typeof request.query.notice === 'string' ? request.query.notice : '' }) }
+  login = (request: Request, response: Response): void => { try { const input = loginSchema.parse(request.body); const user = this.service.authenticate(input.email, input.password); if (!user) { response.redirect('/login?error=E-mail ou senha incorretos.'); return }; request.session.regenerate((error) => { if (error) throw error; request.session.user = user; response.redirect(user.role === 'patient' ? '/patient-app' : '/') }) } catch (error) { if (error instanceof ZodError) { response.redirect('/login?error=Informe um e-mail e uma senha válidos.'); return } throw error } }
+  logout = (request: Request, response: Response): void => { request.session.destroy(() => { response.clearCookie('crm.sid'); response.redirect('/login?notice=logout') }) }
+  forgotPage = (_request: Request, response: Response): void => { response.render('auth/forgot', { layout: false, pageTitle: 'Recuperar senha', resetUrl: '', errorMessage: '' }) }
+  forgot = (request: Request, response: Response): void => { try { const { email } = recoverySchema.parse(request.body); const token = this.service.requestReset(email); response.render('auth/forgot', { layout: false, pageTitle: 'Recuperar senha', resetUrl: token ? `/reset-password?token=${token}` : '', errorMessage: '', submitted: true }) } catch (error) { if (error instanceof ZodError) { response.render('auth/forgot', { layout: false, pageTitle: 'Recuperar senha', resetUrl: '', errorMessage: 'Informe um e-mail válido.' }); return } throw error } }
+  resetPage = (request: Request, response: Response): void => { response.render('auth/reset', { layout: false, pageTitle: 'Nova senha', token: typeof request.query.token === 'string' ? request.query.token : '', errorMessage: '' }) }
+  reset = (request: Request, response: Response): void => { try { const input = resetSchema.parse(request.body); if (!this.service.resetPassword(input.token, input.password)) { response.render('auth/reset', { layout: false, pageTitle: 'Nova senha', token: input.token, errorMessage: 'Link inválido ou expirado.' }); return }; response.redirect('/login?notice=password-reset') } catch (error) { if (error instanceof ZodError) { response.render('auth/reset', { layout: false, pageTitle: 'Nova senha', token: request.body.token ?? '', errorMessage: 'Use ao menos 8 caracteres, com maiúscula, minúscula e número.' }); return } throw error } }
+}
