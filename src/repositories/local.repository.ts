@@ -40,11 +40,11 @@ export class LocalRepository {
     {
       id: randomUUID(), patientId: patientSeeds[0]!.id, title: 'Plano de reeducação alimentar', goal: 'Emagrecimento sustentável', startsOn: '2026-08-01', endsOn: '2026-10-31', kcalTarget: 2100, proteinTargetG: 140, status: 'published', version: 1, createdAt: now, updatedAt: now,
       meals: [
-        { id: randomUUID(), name: 'Café da manhã', scheduledTime: '07:30', description: 'Ovos mexidos, pão integral, mamão e café', kcal: 420, proteinG: 24, carbsG: 48, fatG: 14 },
-        { id: randomUUID(), name: 'Lanche da manhã', scheduledTime: '10:30', description: 'Iogurte natural e castanhas', kcal: 180, proteinG: 12, carbsG: 16, fatG: 8 },
-        { id: randomUUID(), name: 'Almoço', scheduledTime: '13:00', description: 'Arroz, feijão, frango grelhado e salada', kcal: 610, proteinG: 38, carbsG: 72, fatG: 16 },
-        { id: randomUUID(), name: 'Lanche da tarde', scheduledTime: '16:30', description: 'Sanduíche natural e fruta', kcal: 250, proteinG: 18, carbsG: 34, fatG: 6 },
-        { id: randomUUID(), name: 'Jantar', scheduledTime: '20:00', description: 'Batata-doce, peixe assado e legumes', kcal: 480, proteinG: 34, carbsG: 49, fatG: 13 },
+        { id: randomUUID(), name: 'Café da manhã', scheduledTime: '07:30', description: 'Ovos mexidos, pão integral, mamão e café', kcal: 420, proteinG: 24, carbsG: 48, fatG: 14, fiberG: 5, items: [], notes: '' },
+        { id: randomUUID(), name: 'Lanche da manhã', scheduledTime: '10:30', description: 'Iogurte natural e castanhas', kcal: 180, proteinG: 12, carbsG: 16, fatG: 8, fiberG: 2, items: [], notes: '' },
+        { id: randomUUID(), name: 'Almoço', scheduledTime: '13:00', description: 'Arroz, feijão, frango grelhado e salada', kcal: 610, proteinG: 38, carbsG: 72, fatG: 16, fiberG: 12, items: [], notes: '' },
+        { id: randomUUID(), name: 'Lanche da tarde', scheduledTime: '16:30', description: 'Sanduíche natural e fruta', kcal: 250, proteinG: 18, carbsG: 34, fatG: 6, fiberG: 4, items: [], notes: '' },
+        { id: randomUUID(), name: 'Jantar', scheduledTime: '20:00', description: 'Batata-doce, peixe assado e legumes', kcal: 480, proteinG: 34, carbsG: 49, fatG: 13, fiberG: 8, items: [], notes: '' },
       ],
     },
   ]
@@ -120,6 +120,10 @@ export class LocalRepository {
     return {
       id: randomUUID(),
       ...input,
+      bodyDensity: input.bodyDensity ?? null,
+      waterPercent: input.waterPercent ?? null,
+      muscleMassKg: input.muscleMassKg ?? null,
+      boneMassKg: input.boneMassKg ?? null,
       bmi: Number(bmi.toFixed(2)),
       fatMassKg: fatMassKg === null ? null : Number(fatMassKg.toFixed(2)),
       leanMassKg: fatMassKg === null ? null : Number((input.weightKg - fatMassKg).toFixed(2)),
@@ -130,6 +134,8 @@ export class LocalRepository {
   listFoods(): FoodItem[] {
     return [...this.foods].sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'))
   }
+
+  findFood(id: string): FoodItem | undefined { return this.foods.find((food) => food.id === id) }
 
   createFood(input: CreateFoodInput): FoodItem {
     const food: FoodItem = { id: randomUUID(), ...input, source: 'Personalizado', reviewed: true }

@@ -20,6 +20,20 @@ export type Meal = {
   proteinG: number
   carbsG: number
   fatG: number
+  fiberG: number
+  items: MealFoodItem[]
+  notes: string
+}
+
+export type MealFoodItem = {
+  foodId: string
+  name: string
+  quantityGrams: number
+  kcal: number
+  proteinG: number
+  carbsG: number
+  fatG: number
+  fiberG: number
 }
 
 export type MealPlan = {

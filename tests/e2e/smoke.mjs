@@ -81,7 +81,12 @@ try {
   const assessmentDialog = desktop.locator('dialog[open]').filter({ has: desktop.getByText('AVALIAÇÃO FÍSICA') })
   await assessmentDialog.locator('[name="weightKg"]').fill('69.5')
   await assessmentDialog.locator('[name="heightCm"]').fill('170')
-  await assessmentDialog.locator('[name="bodyFatPercent"]').fill('23.4')
+  await assessmentDialog.locator('[name="protocolCode"]').selectOption('jp3_male')
+  if (!await assessmentDialog.locator('[name="skinfoldChestMm"]').isVisible()) throw new Error('Protocolo JP3 não exibiu a dobra peitoral.')
+  if (await assessmentDialog.locator('[name="skinfoldTricepsMm"]').isVisible()) throw new Error('Protocolo JP3 masculino exibiu uma dobra de outro protocolo.')
+  await assessmentDialog.locator('[name="skinfoldChestMm"]').fill('15')
+  await assessmentDialog.locator('[name="skinfoldAbdomenMm"]').fill('18')
+  await assessmentDialog.locator('[name="skinfoldThighMm"]').fill('12')
   await Promise.all([
     desktop.waitForURL(/notice=assessment/),
     assessmentDialog.locator('[type="submit"]').click(),
@@ -102,6 +107,19 @@ try {
     if (!await desktop.getByText(expectedText, { exact: false }).first().isVisible()) throw new Error(`Módulo ${route} não renderizou ${expectedText}.`)
     if (await desktop.getByText('Esta página ainda não existe.', { exact: true }).count()) throw new Error(`Módulo ${route} caiu no 404.`)
   }
+
+  await desktop.goto(`${baseUrl}/diets`, { waitUntil: 'networkidle' })
+  await desktop.locator('.plan-card [data-dialog-open]').first().click()
+  await desktop.locator('.plan-dialog[open] [data-dialog-open^="meal-"]').click()
+  const mealBuilder = desktop.locator('dialog[open] form[data-meal-builder]')
+  await mealBuilder.locator('[name="name"]').fill('Ceia E2E')
+  await mealBuilder.locator('[name="scheduledTime"]').fill('22:00')
+  await mealBuilder.locator('[data-meal-food-search]').fill('banana')
+  await mealBuilder.locator('[data-add-food]:visible').first().click()
+  await mealBuilder.locator('.meal-basket-item input').fill('150')
+  if (!await mealBuilder.locator('[data-total-kcal]').textContent().then((text) => text !== '0 kcal')) throw new Error('Totais da refeição não foram calculados no editor.')
+  await Promise.all([desktop.waitForURL(/notice=meal-created/), mealBuilder.locator('[type="submit"]').click()])
+  if (!await desktop.getByText('Refeição adicionada', { exact: true }).isVisible()) throw new Error('Refeição montada com alimento não foi salva.')
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true })
   mobile.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()) })
