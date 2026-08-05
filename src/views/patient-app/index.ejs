@@ -1,39 +1,43 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <%- include('../partials/head', { pageTitle }) %>
-  </head>
-  <body class="patient-shell">
+  <head><%- include('../partials/head', { pageTitle }) %></head>
+  <body class="patient-shell" data-patient-theme>
     <a class="skip-link" href="#patient-content">Pular para o conteúdo</a>
-    <header class="patient-preview-bar">
-      <a class="icon-button" href="/" aria-label="Voltar ao painel">←</a>
-      <div><strong>PWA do paciente</strong><small>Estrutura pública da Fase 1</small></div>
-      <button class="button button-secondary install-button" type="button" data-install hidden>Instalar</button>
-    </header>
+    <header class="patient-preview-bar"><a class="icon-button" href="/" aria-label="Voltar ao painel">←</a><div><strong>Aplicativo do paciente</strong><small>Área pessoal de <%= patient?.fullName %></small></div><button class="button button-secondary install-button" type="button" data-install hidden>Instalar</button></header>
     <main id="patient-content" class="patient-stage">
-      <section class="phone-frame" aria-label="Prévia do aplicativo do paciente">
-        <div class="phone-status"><strong>09:41</strong><span>● ◒</span></div>
+      <section class="phone-frame patient-app-live" aria-label="Aplicativo do paciente">
+        <div class="phone-status"><strong><%= new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) %></strong><button type="button" data-theme-toggle aria-label="Alternar tema">◐</button></div>
         <div class="patient-content">
-          <p class="eyebrow">CRM NUTRICIONISTA</p>
-          <h1>Seu cuidado, em um só lugar.</h1>
-          <p class="patient-intro">A experiência do paciente será liberada módulo por módulo, com acesso somente aos próprios dados.</p>
-          <div class="patient-foundation-card">
-            <span>01</span>
-            <div><small>ETAPA ATUAL</small><strong>Fundação instalada</strong><p>A casca do aplicativo está pronta e nenhum dado sensível é salvo offline.</p></div>
-          </div>
-          <div class="patient-placeholder-list" aria-label="Recursos futuros">
-            <div><span>02</span><div><strong>Acesso seguro</strong><small>Login e sessões</small></div><i>Em breve</i></div>
-            <div><span>06</span><div><strong>Minha dieta</strong><small>Plano alimentar publicado</small></div><i>Planejado</i></div>
-            <div><span>11</span><div><strong>Minha evolução</strong><small>Medidas e avaliações</small></div><i>Planejado</i></div>
-          </div>
+          <% if (tab === 'home') { %>
+            <header class="patient-greeting"><p class="eyebrow">QUARTA-FEIRA · 05 DE AGOSTO</p><h1>Olá, <%= patient?.fullName.split(' ')[0] %>.</h1><p>Seu cuidado de hoje está organizado aqui.</p></header>
+            <div class="patient-metrics"><span><small>PESO ATUAL</small><strong><%= assessment?.weightKg.toFixed(1).replace('.', ',') %> kg</strong><i><%= patient?.progressKg %> kg</i></span><span><small>ADESÃO</small><strong><%= patient?.adherence %>%</strong><i>últimos 7 dias</i></span></div>
+            <section class="next-appointment-card"><small>PRÓXIMA CONSULTA</small><strong><%= appointments[0]?.date.split('-').reverse().join('/') ?? 'Sem agendamento' %> · <%= appointments[0]?.time ?? '' %></strong><span><%= appointments[0]?.mode === 'online' ? 'Atendimento online' : 'Atendimento presencial' %></span></section>
+            <section class="water-card"><div><small>ÁGUA HOJE</small><strong><%= (patientState.waterMl / 1000).toFixed(2).replace('.', ',') %> L <i>/ 2,5 L</i></strong><progress value="<%= patientState.waterMl %>" max="2500"></progress></div><form method="post" action="/patient-app/water"><input type="hidden" name="amountMl" value="250"><button type="submit">＋ 250 ml</button></form></section>
+            <section class="today-meals"><header><div><small>DIETA DE HOJE</small><strong><%= patientState.completedMealIds.length %> de <%= plan?.meals.length ?? 0 %> concluídas</strong></div><a href="/patient-app?tab=diet">Ver dieta →</a></header><% plan?.meals.slice(0,3).forEach((meal) => { const done = patientState.completedMealIds.includes(meal.id); %><article class="<%= done ? 'done' : '' %>"><time><%= meal.scheduledTime %></time><span><strong><%= meal.name %></strong><small><%= meal.description %></small></span><b><%= done ? '✓' : '○' %></b></article><% }) %></section>
+            <button class="patient-feedback-button" type="button" data-dialog-open="daily-feedback">Responder feedback diário <span>→</span></button>
+          <% } else if (tab === 'diet') { %>
+            <header class="patient-section-head"><p class="eyebrow">PLANO PUBLICADO</p><h1>Minha dieta</h1><p><%= plan?.title %> · <%= plan?.kcalTarget %> kcal</p></header>
+            <div class="patient-meal-list"><% plan?.meals.forEach((meal) => { const done = patientState.completedMealIds.includes(meal.id); %><article class="<%= done ? 'done' : '' %>"><header><time><%= meal.scheduledTime %></time><strong><%= meal.name %></strong><span><%= meal.kcal %> kcal</span></header><p><%= meal.description %></p><small><%= meal.proteinG %>g proteína · <%= meal.carbsG %>g carboidrato · <%= meal.fatG %>g gordura</small><form method="post" action="/patient-app/meals"><input type="hidden" name="mealId" value="<%= meal.id %>"><button type="submit"><%= done ? '✓ Refeição concluída' : 'Marcar como concluída' %></button></form></article><% }) %></div>
+          <% } else if (tab === 'evolution') { %>
+            <header class="patient-section-head"><p class="eyebrow">ACOMPANHAMENTO</p><h1>Minha evolução</h1><p>Indicadores publicados pelo seu nutricionista.</p></header>
+            <div class="evolution-hero"><span><small>EVOLUÇÃO DE PESO</small><strong><%= patient?.progressKg %> kg</strong><i>desde o início</i></span><div class="mini-chart" aria-label="Gráfico ilustrativo de evolução"><i style="height:82%"></i><i style="height:69%"></i><i style="height:58%"></i><i style="height:49%"></i><i style="height:40%"></i></div></div>
+            <div class="evolution-grid"><span><small>PESO</small><strong><%= assessment?.weightKg.toFixed(1).replace('.', ',') %> kg</strong></span><span><small>IMC</small><strong><%= assessment?.bmi.toFixed(1).replace('.', ',') %></strong></span><span><small>GORDURA</small><strong><%= assessment?.bodyFatPercent?.toFixed(1).replace('.', ',') %>%</strong></span><span><small>MASSA MAGRA</small><strong><%= assessment?.leanMassKg?.toFixed(1).replace('.', ',') %> kg</strong></span></div>
+            <section class="patient-info-card"><small>ÚLTIMA AVALIAÇÃO</small><strong><%= assessment?.assessedOn.split('-').reverse().join('/') %></strong><p><%= assessment?.notes %></p></section>
+          <% } else if (tab === 'chat') { %>
+            <header class="patient-section-head"><p class="eyebrow">ATENDIMENTO</p><h1>Mensagens</h1><p>Conversa com Marina Nunes.</p></header><div class="patient-chat"><% messages.forEach((message) => { %><article class="<%= message.author %>"><p><%= message.body %></p><time><%= message.sentAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) %></time></article><% }) %></div><form class="patient-chat-form" method="post" action="/patient-app/messages"><input type="hidden" name="patientId" value="<%= patient?.id %>"><textarea name="body" required rows="2" placeholder="Escreva uma mensagem..."></textarea><button type="submit">Enviar</button></form>
+          <% } else { %>
+            <header class="patient-section-head"><p class="eyebrow">MINHA CONTA</p><h1>Perfil e arquivos</h1><p><%= patient?.email %></p></header>
+            <div class="patient-profile-card"><span class="patient-avatar green"><%= patient?.fullName.split(' ').slice(0,2).map((name) => name[0]).join('') %></span><div><strong><%= patient?.fullName %></strong><small><%= patient?.goal %></small></div></div>
+            <section class="patient-account-section"><strong>Próximas consultas</strong><% appointments.forEach((item) => { %><div><span><%= item.date.split('-').reverse().join('/') %> · <%= item.time %></span><small><%= item.type %></small></div><% }) %></section>
+            <section class="patient-account-section"><strong>Financeiro</strong><% payments.forEach((item) => { %><div><span><%= (item.amountCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) %></span><small><%= item.status === 'paid' ? 'Pago' : 'Pendente' %> · vence <%= item.dueDate.split('-').reverse().join('/') %></small></div><% }) %></section>
+            <section class="patient-account-section"><strong>Documentos</strong><% documents.forEach((item) => { %><a href="/documents/<%= item.id %>/download"><span><%= item.title %></span><small>Baixar arquivo ↓</small></a><% }) %></section>
+          <% } %>
         </div>
-        <nav class="patient-nav" aria-label="Navegação do paciente">
-          <a class="active" href="/patient-app"><span>⌂</span>Início</a>
-          <span><b>≡</b>Dieta</span><span><b>⌁</b>Evolução</span><span><b>○</b>Perfil</span>
-        </nav>
+        <nav class="patient-nav" aria-label="Navegação do paciente"><a class="<%= tab === 'home' ? 'active' : '' %>" href="/patient-app"><span>⌂</span>Início</a><a class="<%= tab === 'diet' ? 'active' : '' %>" href="/patient-app?tab=diet"><span>≡</span>Dieta</a><a class="<%= tab === 'evolution' ? 'active' : '' %>" href="/patient-app?tab=evolution"><span>⌁</span>Evolução</a><a class="<%= tab === 'chat' ? 'active' : '' %>" href="/patient-app?tab=chat"><span>◇</span>Chat</a><a class="<%= tab === 'profile' ? 'active' : '' %>" href="/patient-app?tab=profile"><span>○</span>Perfil</a></nav>
       </section>
     </main>
-    <script src="/js/app.js?v=2" defer></script>
-    <script src="/js/pwa.js?v=2" defer></script>
+    <dialog class="app-dialog patient-feedback-dialog" id="daily-feedback"><form method="post" action="/patient-app/feedback"><header class="dialog-header"><div><p class="eyebrow">CHECK-IN DIÁRIO</p><h2>Como você está hoje?</h2></div><button class="dialog-close" type="button" data-dialog-close>×</button></header><div class="dialog-body"><div class="form-grid"><label class="form-field"><span>Fome (1 baixa · 5 alta)</span><input name="hunger" type="range" min="1" max="5" value="3"></label><label class="form-field"><span>Energia (1 baixa · 5 alta)</span><input name="energy" type="range" min="1" max="5" value="3"></label><label class="form-field"><span>Sono (1 ruim · 5 ótimo)</span><input name="sleep" type="range" min="1" max="5" value="3"></label><label class="form-field form-span-2"><span>Dificuldades ou observações</span><textarea name="difficulty" rows="4"></textarea></label></div></div><footer class="dialog-footer"><button class="button button-secondary" type="button" data-dialog-close>Cancelar</button><button class="button button-primary" type="submit">Enviar feedback</button></footer></form></dialog>
+    <% if (notice) { %><div class="toast toast-success" role="status" data-toast><b>✓</b><span><strong>Registro atualizado</strong><small>As informações foram salvas localmente.</small></span><button type="button" data-toast-close>×</button></div><% } %><% if (errorMessage) { %><div class="toast toast-error" role="alert" data-toast><b>!</b><span><strong>Não foi possível salvar</strong><small><%= errorMessage %></small></span><button type="button" data-toast-close>×</button></div><% } %>
+    <script src="/js/app.js?v=3" defer></script><script src="/js/pwa.js?v=3" defer></script>
   </body>
 </html>

@@ -3,6 +3,9 @@ import type { PatientService } from '../services/patient.service.js'
 import type { AssessmentService } from '../services/assessment.service.js'
 import type { DietService } from '../services/diet.service.js'
 import type { OperationsService } from '../services/operations.service.js'
+import type { MessageService } from '../services/message.service.js'
+import type { SettingsService } from '../services/settings.service.js'
+import type { PatientAppService } from '../services/patient-app.service.js'
 
 export class HomeController {
   constructor(
@@ -10,6 +13,9 @@ export class HomeController {
     private readonly assessmentService: AssessmentService,
     private readonly dietService: DietService,
     private readonly operationsService: OperationsService,
+    private readonly messageService: MessageService,
+    private readonly settingsService: SettingsService,
+    private readonly patientAppService: PatientAppService,
   ) {}
 
   dashboard = (_request: Request, response: Response): void => {
@@ -40,6 +46,10 @@ export class HomeController {
       return
     }
 
+    const allPatients = this.patientService.list()
+    const requestedPatientId = typeof request.query.patient === 'string' ? request.query.patient : ''
+    const selectedChatPatient = allPatients.find((patient) => patient.id === requestedPatientId) ?? allPatients[0]
+
     response.render('dashboard/module', {
       pageTitle: selectedModule.title,
       activeNavigation: moduleKey,
@@ -51,20 +61,37 @@ export class HomeController {
         : [],
       mealPlans: moduleKey === 'diets' ? this.dietService.listPlans() : [],
       foods: moduleKey === 'foods' || moduleKey === 'diets' ? this.dietService.listFoods() : [],
-      allPatients: ['diets', 'agenda', 'finance', 'documents'].includes(moduleKey) ? this.patientService.list() : [],
+      allPatients: ['diets', 'agenda', 'finance', 'documents', 'messages'].includes(moduleKey) ? allPatients : [],
       appointments: moduleKey === 'agenda' ? this.operationsService.appointments() : [],
       payments: moduleKey === 'finance' ? this.operationsService.payments() : [],
       documents: moduleKey === 'documents' ? this.operationsService.documents() : [],
+      chatMessages: moduleKey === 'messages' && selectedChatPatient ? this.messageService.list(selectedChatPatient.id) : [],
+      selectedChatPatient: moduleKey === 'messages' ? selectedChatPatient : undefined,
+      unreadByPatient: moduleKey === 'messages' ? Object.fromEntries(allPatients.map((patient) => [patient.id, this.messageService.list(patient.id).filter((message) => message.author === 'patient' && !message.read).length])) : {},
+      settings: moduleKey === 'settings' ? this.settingsService.get() : undefined,
       notice: typeof request.query.notice === 'string' ? request.query.notice : '',
       errorMessage: typeof request.query.error === 'string' ? request.query.error : '',
       patientName: typeof request.query.patient === 'string' ? request.query.patient : '',
     })
   }
 
-  patientApp = (_request: Request, response: Response): void => {
+  patientApp = (request: Request, response: Response): void => {
+    const patient = this.patientService.list()[0]
+    const plan = this.dietService.listPlans().find((item) => item.patientId === patient?.id && item.status === 'published')
     response.render('patient-app/index', {
       layout: false,
       pageTitle: 'Aplicativo do paciente',
+      tab: typeof request.query.tab === 'string' ? request.query.tab : 'home',
+      notice: typeof request.query.notice === 'string' ? request.query.notice : '',
+      errorMessage: typeof request.query.error === 'string' ? request.query.error : '',
+      patient,
+      plan,
+      assessment: patient ? this.assessmentService.listByPatient(patient.id)[0] : undefined,
+      appointments: patient ? this.operationsService.appointments().filter((item) => item.patientId === patient.id) : [],
+      payments: patient ? this.operationsService.payments().filter((item) => item.patientId === patient.id) : [],
+      documents: patient ? this.operationsService.documents().filter((item) => item.patientId === patient.id) : [],
+      messages: patient ? this.messageService.list(patient.id) : [],
+      patientState: this.patientAppService.state(),
     })
   }
 }

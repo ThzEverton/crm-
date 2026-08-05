@@ -3,6 +3,7 @@ import type { CreatePatientInput, Patient } from '../models/patient.js'
 import type { Assessment, CreateAssessmentInput } from '../models/assessment.js'
 import type { CreateFoodInput, CreateMealInput, CreateMealPlanInput, FoodItem, MealPlan } from '../models/diet.js'
 import type { Appointment, AppointmentStatus, ClinicalDocument, CreateAppointmentInput, CreateDocumentInput, CreatePaymentInput, Payment, PaymentStatus } from '../models/operations.js'
+import type { ChatMessage, CreateMessageInput } from '../models/message.js'
 
 const now = new Date()
 
@@ -15,6 +16,8 @@ const patientSeeds: Patient[] = [
 ]
 
 export class LocalRepository {
+  private settings = { name: 'Marina Nunes', crn: 'CRN-3 48321', email: 'marina@consultorio.local', phone: '(11) 98888-2026', consultationDuration: 60, notifyAppointments: true, notifyMessages: true, notifyPayments: true }
+  private patientAppState = { waterMl: 1250, completedMealIds: new Set<string>(), feedbacks: [] as Array<{ hunger: number; energy: number; sleep: number; difficulty: string; createdAt: Date }> }
   private readonly patients = [...patientSeeds]
   private readonly assessments: Assessment[] = patientSeeds.flatMap((patient, index) => {
     const heightCm = patient.heightCm ?? 165
@@ -59,6 +62,12 @@ export class LocalRepository {
   private readonly documents: ClinicalDocument[] = [
     { id: randomUUID(), patientId: patientSeeds[0]!.id, title: 'Plano alimentar — agosto', type: 'Plano alimentar', status: 'available', createdOn: '2026-08-01', createdAt: now },
     { id: randomUUID(), patientId: patientSeeds[3]!.id, title: 'Relatório de evolução', type: 'Evolução', status: 'available', createdOn: '2026-07-28', createdAt: now },
+  ]
+  private readonly messages: ChatMessage[] = [
+    { id: randomUUID(), patientId: patientSeeds[0]!.id, author: 'patient', body: 'Oi, Marina! Consegui seguir bem o plano durante a semana.', sentAt: new Date('2026-08-05T11:12:00-03:00'), read: false },
+    { id: randomUUID(), patientId: patientSeeds[0]!.id, author: 'nutritionist', body: 'Que ótimo, Ana. Como ficou sua fome no período da tarde?', sentAt: new Date('2026-08-05T11:20:00-03:00'), read: true },
+    { id: randomUUID(), patientId: patientSeeds[2]!.id, author: 'patient', body: 'Estou com dificuldade para manter o lanche da manhã.', sentAt: new Date('2026-08-05T09:08:00-03:00'), read: false },
+    { id: randomUUID(), patientId: patientSeeds[3]!.id, author: 'nutritionist', body: 'Seu relatório de evolução já está disponível.', sentAt: new Date('2026-08-04T17:40:00-03:00'), read: true },
   ]
 
   listPatients(): Patient[] {
@@ -170,6 +179,17 @@ export class LocalRepository {
   listDocuments(): ClinicalDocument[] { return [...this.documents].sort((a, b) => b.createdOn.localeCompare(a.createdOn)) }
   findDocument(id: string): ClinicalDocument | undefined { return this.documents.find((entry) => entry.id === id) }
   createDocument(input: CreateDocumentInput): ClinicalDocument { const item: ClinicalDocument = { id: randomUUID(), ...input, status: 'available', createdAt: new Date() }; this.documents.push(item); return item }
+
+  listMessages(patientId?: string): ChatMessage[] { return this.messages.filter((item) => !patientId || item.patientId === patientId).sort((a, b) => a.sentAt.getTime() - b.sentAt.getTime()) }
+  createMessage(input: CreateMessageInput): ChatMessage { const item: ChatMessage = { id: randomUUID(), ...input, author: 'nutritionist', sentAt: new Date(), read: true }; this.messages.push(item); return item }
+  createPatientMessage(input: CreateMessageInput): ChatMessage { const item: ChatMessage = { id: randomUUID(), ...input, author: 'patient', sentAt: new Date(), read: false }; this.messages.push(item); return item }
+  markMessagesRead(patientId: string): boolean { const items = this.messages.filter((item) => item.patientId === patientId); if (!items.length) return false; items.forEach((item) => { item.read = true }); return true }
+  getSettings() { return { ...this.settings } }
+  updateSettings(input: typeof this.settings) { this.settings = { ...input }; return this.getSettings() }
+  getPatientAppState() { return { waterMl: this.patientAppState.waterMl, completedMealIds: [...this.patientAppState.completedMealIds], feedbacks: [...this.patientAppState.feedbacks] } }
+  addWater(amountMl: number) { this.patientAppState.waterMl = Math.min(10_000, this.patientAppState.waterMl + amountMl); return this.getPatientAppState() }
+  toggleMeal(mealId: string) { if (this.patientAppState.completedMealIds.has(mealId)) this.patientAppState.completedMealIds.delete(mealId); else this.patientAppState.completedMealIds.add(mealId); return this.getPatientAppState() }
+  saveFeedback(input: { hunger: number; energy: number; sleep: number; difficulty: string }) { const item = { ...input, createdAt: new Date() }; this.patientAppState.feedbacks.push(item); return item }
 }
 
 export const localRepository = new LocalRepository()
