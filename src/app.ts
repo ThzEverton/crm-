@@ -6,6 +6,7 @@ import expressLayouts from 'express-ejs-layouts'
 import helmet from 'helmet'
 import { pinoHttp } from 'pino-http'
 import { env } from './config/env.js'
+import { sessionMiddleware } from './config/session.js'
 import { databasePool } from './config/database.js'
 import { HealthController } from './controllers/health.controller.js'
 import { HomeController } from './controllers/home.controller.js'
@@ -16,7 +17,9 @@ import { OperationsController } from './controllers/operations.controller.js'
 import { MessageController } from './controllers/message.controller.js'
 import { SettingsController } from './controllers/settings.controller.js'
 import { PatientAppController } from './controllers/patient-app.controller.js'
+import { AuthController } from './controllers/auth.controller.js'
 import { errorHandler } from './middlewares/error-handler.js'
+import { sameOrigin } from './middlewares/same-origin.js'
 import { notFound } from './middlewares/not-found.js'
 import { HealthRepository } from './repositories/health.repository.js'
 import { localRepository } from './repositories/local.repository.js'
@@ -30,6 +33,7 @@ import { OperationsService } from './services/operations.service.js'
 import { MessageService } from './services/message.service.js'
 import { SettingsService } from './services/settings.service.js'
 import { PatientAppService } from './services/patient-app.service.js'
+import { AuthService } from './services/auth.service.js'
 import { logger } from './utils/logger.js'
 
 export type AppDependencies = {
@@ -78,6 +82,8 @@ export function createApp(dependencies: AppDependencies = {}): Express {
   app.use(compression())
   app.use(express.urlencoded({ extended: false, limit: '100kb' }))
   app.use(express.json({ limit: '100kb' }))
+  app.use(sessionMiddleware)
+  app.use(sameOrigin)
   app.use(express.static(publicPath, {
     maxAge: env.NODE_ENV === 'production' ? '7d' : 0,
     index: false,
@@ -87,6 +93,7 @@ export function createApp(dependencies: AppDependencies = {}): Express {
     request.id = request.id || response.getHeader('x-request-id')?.toString() || randomUUID()
     response.locals.requestId = request.id
     response.locals.currentYear = new Date().getFullYear()
+    response.locals.currentUser = request.session.user
     next()
   })
 
@@ -100,6 +107,7 @@ export function createApp(dependencies: AppDependencies = {}): Express {
   const messageService = new MessageService(localRepository)
   const settingsService = new SettingsService(localRepository)
   const patientAppService = new PatientAppService(localRepository)
+  const authService = new AuthService(patientService.list()[0]!.id)
   app.use(createHealthRouter(new HealthController(healthService)))
   app.use(createWebRouter(
     new HomeController(patientService, assessmentService, dietService, operationsService, messageService, settingsService, patientAppService),
@@ -110,6 +118,7 @@ export function createApp(dependencies: AppDependencies = {}): Express {
     new MessageController(messageService),
     new SettingsController(settingsService),
     new PatientAppController(patientAppService),
+    new AuthController(authService),
   ))
   app.use(notFound)
   app.use(errorHandler)

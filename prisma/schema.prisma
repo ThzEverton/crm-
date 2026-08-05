@@ -7,5 +7,387 @@ datasource db {
   provider = "postgresql"
 }
 
-// A Fase 1 configura a conexão e o ciclo de migrations sem antecipar entidades.
-// Os modelos de autenticação começam na Fase 2 e não usarão clinic_id.
+enum UserRole {
+  NUTRITIONIST
+  PATIENT
+}
+
+enum PatientStatus {
+  ACTIVE
+  ATTENTION
+  INACTIVE
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+  REFUNDED
+}
+
+enum PlanStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum DocumentStatus {
+  DRAFT
+  AVAILABLE
+  ARCHIVED
+}
+
+enum MessageAuthor {
+  NUTRITIONIST
+  PATIENT
+}
+
+enum FileStatus {
+  PENDING
+  AVAILABLE
+  QUARANTINED
+  DELETED
+}
+
+model User {
+  id           String               @id @default(uuid()) @db.Uuid
+  email        String               @unique @db.VarChar(254)
+  passwordHash String               @map("password_hash")
+  name         String
+  role         UserRole
+  active       Boolean              @default(true)
+  createdAt    DateTime             @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime             @updatedAt @map("updated_at") @db.Timestamptz
+  patient      Patient?
+  sessions     Session[]
+  resetTokens  PasswordResetToken[]
+  auditEvents  AuditLog[]
+  documents    Document[]           @relation("DocumentCreator")
+  messages     Message[]            @relation("MessageSender")
+
+  @@map("users")
+}
+
+model Session {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at") @db.Timestamptz
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("sessions")
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  tokenHash String    @unique @map("token_hash")
+  expiresAt DateTime  @map("expires_at") @db.Timestamptz
+  usedAt    DateTime? @map("used_at") @db.Timestamptz
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@map("password_reset_tokens")
+}
+
+model Patient {
+  id               String        @id @default(uuid()) @db.Uuid
+  userId           String?       @unique @map("user_id") @db.Uuid
+  fullName         String        @map("full_name")
+  email            String        @unique @db.VarChar(254)
+  phone            String
+  birthDate        DateTime      @map("birth_date") @db.Date
+  sex              String?
+  heightCm         Decimal?      @map("height_cm") @db.Decimal(5, 2)
+  initialWeightKg  Decimal?      @map("initial_weight_kg") @db.Decimal(6, 2)
+  profession       String?
+  address          String?
+  emergencyContact String?       @map("emergency_contact")
+  goal             String
+  activityLevel    String        @map("activity_level")
+  clinicalHistory  String?       @map("clinical_history")
+  restrictions     String?
+  allergies        String?
+  medications      String?
+  surgeries        String?
+  habits           String?
+  notes            String?
+  status           PatientStatus @default(ACTIVE)
+  deletedAt        DateTime?     @map("deleted_at") @db.Timestamptz
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  user             User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  assessments      Assessment[]
+  mealPlans        MealPlan[]
+  mealLogs         MealLog[]
+  feedbacks        Feedback[]
+  appointments     Appointment[]
+  payments         Payment[]
+  conversation     Conversation?
+  files            FileAsset[]
+  documents        Document[]
+  consents         Consent[]
+
+  @@index([status, fullName])
+  @@map("patients")
+}
+
+model Assessment {
+  id                  String    @id @default(uuid()) @db.Uuid
+  patientId           String    @map("patient_id") @db.Uuid
+  assessedOn          DateTime  @map("assessed_on") @db.Date
+  weightKg            Decimal   @map("weight_kg") @db.Decimal(6, 2)
+  heightCm            Decimal   @map("height_cm") @db.Decimal(5, 2)
+  bmi                 Decimal   @db.Decimal(5, 2)
+  bodyFatPercent      Decimal?  @map("body_fat_percent") @db.Decimal(5, 2)
+  fatMassKg           Decimal?  @map("fat_mass_kg") @db.Decimal(6, 2)
+  leanMassKg          Decimal?  @map("lean_mass_kg") @db.Decimal(6, 2)
+  protocolCode        String    @map("protocol_code")
+  protocolVersion     String    @map("protocol_version")
+  measurements        Json
+  skinfolds           Json
+  intermediateResults Json      @map("intermediate_results")
+  notes               String?
+  publishedAt         DateTime? @map("published_at") @db.Timestamptz
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  patient             Patient   @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([patientId, assessedOn])
+  @@map("assessments")
+}
+
+model Food {
+  id                String   @id @default(uuid()) @db.Uuid
+  name              String
+  normalizedName    String   @map("normalized_name")
+  brand             String?
+  barcode           String?
+  source            String
+  sourceCode        String?  @map("source_code")
+  sourceVersion     String?  @map("source_version")
+  servingGrams      Decimal  @map("serving_grams") @db.Decimal(8, 2)
+  nutrients         Json
+  householdMeasures Json     @map("household_measures")
+  custom            Boolean  @default(false)
+  reviewed          Boolean  @default(false)
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@unique([source, sourceCode])
+  @@index([normalizedName])
+  @@index([barcode])
+  @@map("foods")
+}
+
+model MealPlan {
+  id             String     @id @default(uuid()) @db.Uuid
+  patientId      String     @map("patient_id") @db.Uuid
+  title          String
+  goal           String
+  startsOn       DateTime   @map("starts_on") @db.Date
+  endsOn         DateTime   @map("ends_on") @db.Date
+  targets        Json
+  totalsSnapshot Json       @map("totals_snapshot")
+  status         PlanStatus @default(DRAFT)
+  version        Int        @default(1)
+  publishedAt    DateTime?  @map("published_at") @db.Timestamptz
+  createdAt      DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt      DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+  patient        Patient    @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  meals          Meal[]
+
+  @@unique([patientId, title, version])
+  @@index([patientId, status])
+  @@map("meal_plans")
+}
+
+model Meal {
+  id            String    @id @default(uuid()) @db.Uuid
+  mealPlanId    String    @map("meal_plan_id") @db.Uuid
+  name          String
+  scheduledTime String    @map("scheduled_time") @db.VarChar(5)
+  notes         String?
+  foodSnapshot  Json      @map("food_snapshot")
+  totals        Json
+  substitutions Json
+  sortOrder     Int       @default(0) @map("sort_order")
+  mealPlan      MealPlan  @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
+  logs          MealLog[]
+
+  @@index([mealPlanId, sortOrder])
+  @@map("meals")
+}
+
+model MealLog {
+  id          String    @id @default(uuid()) @db.Uuid
+  patientId   String    @map("patient_id") @db.Uuid
+  mealId      String    @map("meal_id") @db.Uuid
+  completedAt DateTime? @map("completed_at") @db.Timestamptz
+  eatenAt     DateTime? @map("eaten_at") @db.Timestamptz
+  comment     String?
+  difficulty  String?
+  replacement Json?
+  photoFileId String?   @map("photo_file_id") @db.Uuid
+  patient     Patient   @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  meal        Meal      @relation(fields: [mealId], references: [id], onDelete: Restrict)
+
+  @@unique([patientId, mealId])
+  @@map("meal_logs")
+}
+
+model Feedback {
+  id          String   @id @default(uuid()) @db.Uuid
+  patientId   String   @map("patient_id") @db.Uuid
+  answers     Json
+  waterMl     Int?     @map("water_ml")
+  submittedAt DateTime @default(now()) @map("submitted_at") @db.Timestamptz
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([patientId, submittedAt])
+  @@map("feedbacks")
+}
+
+model Appointment {
+  id              String            @id @default(uuid()) @db.Uuid
+  patientId       String            @map("patient_id") @db.Uuid
+  startsAt        DateTime          @map("starts_at") @db.Timestamptz
+  durationMinutes Int               @map("duration_minutes")
+  mode            String
+  type            String
+  status          AppointmentStatus @default(SCHEDULED)
+  notes           String?
+  createdAt       DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+  patient         Patient           @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([startsAt, status])
+  @@index([patientId, startsAt])
+  @@map("appointments")
+}
+
+model Payment {
+  id          String        @id @default(uuid()) @db.Uuid
+  patientId   String        @map("patient_id") @db.Uuid
+  planName    String        @map("plan_name")
+  amountCents Int           @map("amount_cents")
+  dueDate     DateTime      @map("due_date") @db.Date
+  paidAt      DateTime?     @map("paid_at") @db.Timestamptz
+  method      String?
+  status      PaymentStatus @default(PENDING)
+  notes       String?
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+  patient     Patient       @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([status, dueDate])
+  @@index([patientId, dueDate])
+  @@map("payments")
+}
+
+model Conversation {
+  id        String    @id @default(uuid()) @db.Uuid
+  patientId String    @unique @map("patient_id") @db.Uuid
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  patient   Patient   @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  messages  Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id             String        @id @default(uuid()) @db.Uuid
+  conversationId String        @map("conversation_id") @db.Uuid
+  senderUserId   String        @map("sender_user_id") @db.Uuid
+  author         MessageAuthor
+  body           String
+  attachmentId   String?       @map("attachment_id") @db.Uuid
+  readAt         DateTime?     @map("read_at") @db.Timestamptz
+  sentAt         DateTime      @default(now()) @map("sent_at") @db.Timestamptz
+  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender         User          @relation("MessageSender", fields: [senderUserId], references: [id], onDelete: Restrict)
+  attachment     FileAsset?    @relation("MessageAttachment", fields: [attachmentId], references: [id], onDelete: SetNull)
+
+  @@index([conversationId, sentAt])
+  @@map("messages")
+}
+
+model FileAsset {
+  id                 String     @id @default(uuid()) @db.Uuid
+  patientId          String?    @map("patient_id") @db.Uuid
+  storageKey         String     @unique @map("storage_key")
+  originalName       String     @map("original_name")
+  mimeType           String     @map("mime_type")
+  sizeBytes          Int        @map("size_bytes")
+  sha256             String     @db.Char(64)
+  category           String
+  status             FileStatus @default(PENDING)
+  metadata           Json
+  createdAt          DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  deletedAt          DateTime?  @map("deleted_at") @db.Timestamptz
+  patient            Patient?   @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  documents          Document[]
+  messageAttachments Message[]  @relation("MessageAttachment")
+
+  @@index([patientId, category])
+  @@map("file_assets")
+}
+
+model Document {
+  id              String         @id @default(uuid()) @db.Uuid
+  patientId       String         @map("patient_id") @db.Uuid
+  createdByUserId String         @map("created_by_user_id") @db.Uuid
+  fileId          String?        @map("file_id") @db.Uuid
+  title           String
+  type            String
+  version         Int            @default(1)
+  status          DocumentStatus @default(DRAFT)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz
+  patient         Patient        @relation(fields: [patientId], references: [id], onDelete: Restrict)
+  createdBy       User           @relation("DocumentCreator", fields: [createdByUserId], references: [id], onDelete: Restrict)
+  file            FileAsset?     @relation(fields: [fileId], references: [id], onDelete: SetNull)
+
+  @@index([patientId, createdAt])
+  @@map("documents")
+}
+
+model Consent {
+  id         String    @id @default(uuid()) @db.Uuid
+  patientId  String    @map("patient_id") @db.Uuid
+  type       String
+  version    String
+  acceptedAt DateTime  @map("accepted_at") @db.Timestamptz
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz
+  evidence   Json
+  patient    Patient   @relation(fields: [patientId], references: [id], onDelete: Restrict)
+
+  @@index([patientId, type])
+  @@map("consents")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String?  @map("user_id") @db.Uuid
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id") @db.Uuid
+  metadata   Json
+  ipHash     String?  @map("ip_hash")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId, createdAt])
+  @@index([userId, createdAt])
+  @@map("audit_logs")
+}

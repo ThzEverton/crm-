@@ -24,7 +24,8 @@ describe('aplicação HTTP', () => {
   it('renderiza a casca PWA do paciente', async () => {
     const response = await request(createApp({ healthService: healthService('ready') })).get('/patient-app')
     expect(response.status).toBe(200)
-    expect(response.text).toContain('nenhum dado sensível é salvo offline')
+    expect(response.text).toContain('Seu cuidado de hoje está organizado aqui.')
+    expect(response.text).toContain('Responder feedback diário')
   })
 
   it('expõe liveness sem depender do banco', async () => {

@@ -13,7 +13,7 @@ const server = spawn(process.execPath, ['dist/server.js'], {
   cwd: process.cwd(),
   env: {
     ...process.env,
-    NODE_ENV: 'test',
+    NODE_ENV: 'development',
     LOG_LEVEL: 'silent',
     PORT: String(port),
     DATABASE_URL: 'postgresql://test:test@localhost:5432/crm_nutricionista_test',
@@ -42,7 +42,10 @@ try {
   const desktop = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
   desktop.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()) })
   desktop.on('pageerror', (error) => errors.push(error.message))
-  await desktop.goto(baseUrl, { waitUntil: 'networkidle' })
+  await desktop.goto(`${baseUrl}/login`, { waitUntil: 'networkidle' })
+  await desktop.locator('[name="email"]').fill('marina@consultorio.local')
+  await desktop.locator('[name="password"]').fill('Nutri@2026')
+  await Promise.all([desktop.waitForURL(baseUrl + '/'), desktop.locator('[type="submit"]').click()])
   await desktop.evaluate(() => navigator.serviceWorker.ready)
   await desktop.reload({ waitUntil: 'networkidle' })
   if (await desktop.locator('h1').textContent() !== 'Bom dia, Marina.') {
@@ -85,13 +88,31 @@ try {
   ])
   if (!await desktop.getByText('Avaliação salva', { exact: true }).isVisible()) throw new Error('Avaliação local não foi salva.')
 
+  const moduleChecks = [
+    ['/foods', 'Banco de alimentos'],
+    ['/diets', 'Planos alimentares'],
+    ['/agenda', 'Nova consulta'],
+    ['/finance', 'Novo lançamento'],
+    ['/documents', 'Novo documento'],
+    ['/messages', 'Conversas'],
+    ['/settings', 'Dados do consultório'],
+  ]
+  for (const [route, expectedText] of moduleChecks) {
+    await desktop.goto(`${baseUrl}${route}`, { waitUntil: 'networkidle' })
+    if (!await desktop.getByText(expectedText, { exact: false }).first().isVisible()) throw new Error(`Módulo ${route} não renderizou ${expectedText}.`)
+    if (await desktop.getByText('Esta página ainda não existe.', { exact: true }).count()) throw new Error(`Módulo ${route} caiu no 404.`)
+  }
+
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true })
   mobile.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()) })
   mobile.on('pageerror', (error) => errors.push(error.message))
-  await mobile.goto(`${baseUrl}/patient-app`, { waitUntil: 'networkidle' })
+  await mobile.goto(`${baseUrl}/login`, { waitUntil: 'networkidle' })
+  await mobile.locator('[name="email"]').fill('ana@example.local')
+  await mobile.locator('[name="password"]').fill('Paciente@2026')
+  await Promise.all([mobile.waitForURL(/patient-app/), mobile.locator('[type="submit"]').click()])
   const overflows = await mobile.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)
   if (overflows) throw new Error('A PWA possui rolagem horizontal no viewport mobile.')
-  if (await mobile.locator('.patient-nav > *').count() !== 4) throw new Error('Navegação mobile incompleta.')
+  if (await mobile.locator('.patient-nav > *').count() !== 5) throw new Error('Navegação mobile incompleta.')
   await mobile.screenshot({ path: path.join(outputDir, 'foundation-mobile.png'), fullPage: true })
 
   if (errors.length) throw new Error(`Erros no console: ${errors.join(' | ')}`)

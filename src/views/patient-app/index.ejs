@@ -3,7 +3,7 @@
   <head><%- include('../partials/head', { pageTitle }) %></head>
   <body class="patient-shell" data-patient-theme>
     <a class="skip-link" href="#patient-content">Pular para o conteúdo</a>
-    <header class="patient-preview-bar"><a class="icon-button" href="/" aria-label="Voltar ao painel">←</a><div><strong>Aplicativo do paciente</strong><small>Área pessoal de <%= patient?.fullName %></small></div><button class="button button-secondary install-button" type="button" data-install hidden>Instalar</button></header>
+    <header class="patient-preview-bar"><a class="icon-button" href="<%= currentUser?.role === 'nutritionist' ? '/' : '/patient-app' %>" aria-label="Voltar">←</a><div><strong>Aplicativo do paciente</strong><small>Área pessoal de <%= patient?.fullName %></small></div><form method="post" action="/logout"><button class="button button-secondary" type="submit">Sair</button></form></header>
     <main id="patient-content" class="patient-stage">
       <section class="phone-frame patient-app-live" aria-label="Aplicativo do paciente">
         <div class="phone-status"><strong><%= new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) %></strong><button type="button" data-theme-toggle aria-label="Alternar tema">◐</button></div>
