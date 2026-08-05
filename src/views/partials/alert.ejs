@@ -1,0 +1,4 @@
+<div class="alert alert-<%= tone ?? 'info' %>" role="<%= tone === 'danger' ? 'alert' : 'status' %>">
+  <span class="alert-mark" aria-hidden="true"><%= tone === 'success' ? '✓' : tone === 'danger' ? '!' : 'i' %></span>
+  <div><strong><%= title %></strong><p><%= message %></p></div>
+</div>

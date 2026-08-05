@@ -1,0 +1,3 @@
+-- Fundação do CRM Nutricionista.
+-- Nenhuma entidade de domínio é criada na Fase 1.
+-- O Prisma registra esta versão na tabela interna _prisma_migrations.

@@ -1,0 +1,6 @@
+<nav class="breadcrumbs" aria-label="Navegação estrutural">
+  <% items.forEach((item, index) => { %>
+    <% if (item.href && index < items.length - 1) { %><a href="<%= item.href %>"><%= item.label %></a><% } else { %><span aria-current="page"><%= item.label %></span><% } %>
+    <% if (index < items.length - 1) { %><i aria-hidden="true">/</i><% } %>
+  <% }) %>
+</nav>

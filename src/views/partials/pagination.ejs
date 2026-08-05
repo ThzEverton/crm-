@@ -1,0 +1,5 @@
+<nav class="pagination" aria-label="Paginação">
+  <a class="<%= currentPage <= 1 ? 'disabled' : '' %>" href="?page=<%= Math.max(1, currentPage - 1) %>">Anterior</a>
+  <span>Página <strong><%= currentPage %></strong> de <%= totalPages %></span>
+  <a class="<%= currentPage >= totalPages ? 'disabled' : '' %>" href="?page=<%= Math.min(totalPages, currentPage + 1) %>">Próxima</a>
+</nav>

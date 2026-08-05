@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <%- include('../partials/head', { pageTitle }) %>
+  </head>
+  <body class="patient-shell">
+    <a class="skip-link" href="#patient-content">Pular para o conteúdo</a>
+    <header class="patient-preview-bar">
+      <a class="icon-button" href="/" aria-label="Voltar ao painel">←</a>
+      <div><strong>PWA do paciente</strong><small>Estrutura pública da Fase 1</small></div>
+      <button class="button button-secondary install-button" type="button" data-install hidden>Instalar</button>
+    </header>
+    <main id="patient-content" class="patient-stage">
+      <section class="phone-frame" aria-label="Prévia do aplicativo do paciente">
+        <div class="phone-status"><strong>09:41</strong><span>● ◒</span></div>
+        <div class="patient-content">
+          <p class="eyebrow">CRM NUTRICIONISTA</p>
+          <h1>Seu cuidado, em um só lugar.</h1>
+          <p class="patient-intro">A experiência do paciente será liberada módulo por módulo, com acesso somente aos próprios dados.</p>
+          <div class="patient-foundation-card">
+            <span>01</span>
+            <div><small>ETAPA ATUAL</small><strong>Fundação instalada</strong><p>A casca do aplicativo está pronta e nenhum dado sensível é salvo offline.</p></div>
+          </div>
+          <div class="patient-placeholder-list" aria-label="Recursos futuros">
+            <div><span>02</span><div><strong>Acesso seguro</strong><small>Login e sessões</small></div><i>Em breve</i></div>
+            <div><span>06</span><div><strong>Minha dieta</strong><small>Plano alimentar publicado</small></div><i>Planejado</i></div>
+            <div><span>11</span><div><strong>Minha evolução</strong><small>Medidas e avaliações</small></div><i>Planejado</i></div>
+          </div>
+        </div>
+        <nav class="patient-nav" aria-label="Navegação do paciente">
+          <a class="active" href="/patient-app"><span>⌂</span>Início</a>
+          <span><b>≡</b>Dieta</span><span><b>⌁</b>Evolução</span><span><b>○</b>Perfil</span>
+        </nav>
+      </section>
+    </main>
+    <script src="/js/app.js?v=2" defer></script>
+    <script src="/js/pwa.js?v=2" defer></script>
+  </body>
+</html>

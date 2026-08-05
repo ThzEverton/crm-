@@ -1,0 +1,11 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// A Fase 1 configura a conexão e o ciclo de migrations sem antecipar entidades.
+// Os modelos de autenticação começam na Fase 2 e não usarão clinic_id.

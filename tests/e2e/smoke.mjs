@@ -1,0 +1,102 @@
+import { spawn } from 'node:child_process'
+import { mkdir } from 'node:fs/promises'
+import path from 'node:path'
+import { chromium } from 'playwright-core'
+
+const port = 3199
+const baseUrl = `http://127.0.0.1:${port}`
+const chromePath = process.env.CHROME_PATH ?? 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe'
+const outputDir = path.join(process.cwd(), '.chrome-test')
+const errors = []
+
+const server = spawn(process.execPath, ['dist/server.js'], {
+  cwd: process.cwd(),
+  env: {
+    ...process.env,
+    NODE_ENV: 'test',
+    LOG_LEVEL: 'silent',
+    PORT: String(port),
+    DATABASE_URL: 'postgresql://test:test@localhost:5432/crm_nutricionista_test',
+    SESSION_SECRET: 'e2e-session-secret-with-at-least-32-characters',
+  },
+  stdio: ['ignore', 'pipe', 'pipe'],
+})
+
+async function waitForServer() {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    try {
+      const response = await fetch(`${baseUrl}/health`)
+      if (response.ok) return
+    } catch {}
+    await new Promise((resolve) => setTimeout(resolve, 150))
+  }
+  throw new Error('Servidor E2E não iniciou em tempo.')
+}
+
+let browser
+try {
+  await waitForServer()
+  await mkdir(outputDir, { recursive: true })
+  browser = await chromium.launch({ executablePath: chromePath, headless: true })
+
+  const desktop = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
+  desktop.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()) })
+  desktop.on('pageerror', (error) => errors.push(error.message))
+  await desktop.goto(baseUrl, { waitUntil: 'networkidle' })
+  await desktop.evaluate(() => navigator.serviceWorker.ready)
+  await desktop.reload({ waitUntil: 'networkidle' })
+  if (await desktop.locator('h1').textContent() !== 'Bom dia, Marina.') {
+    throw new Error('Título principal do desktop não corresponde ao esperado.')
+  }
+  if (await desktop.locator('.sidebar nav a').count() < 8) throw new Error('Navegação principal do nutricionista incompleta.')
+  const statsLayout = await desktop.locator('.clinic-stats').evaluate((element) => getComputedStyle(element).display)
+  if (statsLayout !== 'grid') throw new Error('CSS atualizado não foi aplicado após ativação do service worker.')
+  if (await desktop.locator('.sidebar-close').isVisible()) {
+    throw new Error('Botão de fechar menu apareceu no desktop.')
+  }
+  await desktop.screenshot({ path: path.join(outputDir, 'foundation-desktop.png'), fullPage: true })
+
+  await desktop.goto(`${baseUrl}/patients`, { waitUntil: 'networkidle' })
+  await desktop.locator('[data-dialog-open="new-patient"]').first().click()
+  const newPatientDialog = desktop.locator('#new-patient')
+  if (!await newPatientDialog.isVisible()) throw new Error('Modal de novo paciente não abriu.')
+  await newPatientDialog.locator('[name="fullName"]').fill('Paciente E2E')
+  await newPatientDialog.locator('[name="email"]').fill('paciente.e2e@example.local')
+  await newPatientDialog.locator('[name="phone"]').fill('(11) 99999-1111')
+  await newPatientDialog.locator('[name="birthDate"]').fill('1991-02-03')
+  await newPatientDialog.locator('[name="activityLevel"]').selectOption({ label: 'Moderado' })
+  await newPatientDialog.locator('[name="goal"]').fill('Validar fluxo local')
+  await Promise.all([
+    desktop.waitForURL(/notice=created/),
+    newPatientDialog.locator('[type="submit"]').click(),
+  ])
+  if (!await desktop.getByText('Paciente E2E', { exact: true }).first().isVisible()) throw new Error('Paciente criado não apareceu na lista.')
+  await desktop.locator('[data-patient-name="paciente e2e"] [data-dialog-open]').click()
+  const patientDialog = desktop.locator('dialog[open]').filter({ has: desktop.getByRole('heading', { name: 'Paciente E2E' }) })
+  if (!await patientDialog.isVisible()) throw new Error('Modal de prontuário não abriu.')
+  await patientDialog.getByRole('button', { name: /Nova avaliação/ }).click()
+  const assessmentDialog = desktop.locator('dialog[open]').filter({ has: desktop.getByText('AVALIAÇÃO FÍSICA') })
+  await assessmentDialog.locator('[name="weightKg"]').fill('69.5')
+  await assessmentDialog.locator('[name="heightCm"]').fill('170')
+  await assessmentDialog.locator('[name="bodyFatPercent"]').fill('23.4')
+  await Promise.all([
+    desktop.waitForURL(/notice=assessment/),
+    assessmentDialog.locator('[type="submit"]').click(),
+  ])
+  if (!await desktop.getByText('Avaliação salva', { exact: true }).isVisible()) throw new Error('Avaliação local não foi salva.')
+
+  const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true })
+  mobile.on('console', (message) => { if (message.type() === 'error') errors.push(message.text()) })
+  mobile.on('pageerror', (error) => errors.push(error.message))
+  await mobile.goto(`${baseUrl}/patient-app`, { waitUntil: 'networkidle' })
+  const overflows = await mobile.evaluate(() => document.documentElement.scrollWidth > window.innerWidth)
+  if (overflows) throw new Error('A PWA possui rolagem horizontal no viewport mobile.')
+  if (await mobile.locator('.patient-nav > *').count() !== 4) throw new Error('Navegação mobile incompleta.')
+  await mobile.screenshot({ path: path.join(outputDir, 'foundation-mobile.png'), fullPage: true })
+
+  if (errors.length) throw new Error(`Erros no console: ${errors.join(' | ')}`)
+  console.info('E2E concluído: desktop e mobile sem erros de console ou overflow.')
+} finally {
+  await browser?.close()
+  server.kill('SIGTERM')
+}

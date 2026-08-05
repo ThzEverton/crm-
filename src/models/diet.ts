@@ -1,0 +1,43 @@
+export type FoodItem = {
+  id: string
+  name: string
+  source: 'TACO' | 'Personalizado' | 'USDA' | 'Open Food Facts'
+  servingGrams: number
+  kcal: number
+  proteinG: number
+  carbsG: number
+  fatG: number
+  fiberG: number
+  reviewed: boolean
+}
+
+export type Meal = {
+  id: string
+  name: string
+  scheduledTime: string
+  description: string
+  kcal: number
+  proteinG: number
+  carbsG: number
+  fatG: number
+}
+
+export type MealPlan = {
+  id: string
+  patientId: string
+  title: string
+  goal: string
+  startsOn: string
+  endsOn: string
+  kcalTarget: number
+  proteinTargetG: number
+  status: 'draft' | 'published'
+  version: number
+  meals: Meal[]
+  createdAt: Date
+  updatedAt: Date
+}
+
+export type CreateMealPlanInput = Omit<MealPlan, 'id' | 'status' | 'version' | 'meals' | 'createdAt' | 'updatedAt'>
+export type CreateMealInput = Omit<Meal, 'id'>
+export type CreateFoodInput = Omit<FoodItem, 'id' | 'source' | 'reviewed'>

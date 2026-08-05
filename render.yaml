@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: crm-nutricionista
+    runtime: node
+    plan: starter
+    buildCommand: npm ci && npm run build
+    preDeployCommand: npm run db:migrate
+    startCommand: npm start
+    healthCheckPath: /health
+    maxShutdownDelaySeconds: 10
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: NODE_VERSION
+        value: 24
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: crm-nutricionista-db
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: TRUST_PROXY
+        value: "true"
+
+databases:
+  - name: crm-nutricionista-db
+    plan: basic-256mb
+    postgresMajorVersion: "18"
+    databaseName: crm_nutricionista
+    user: crm_nutricionista
+    ipAllowList: []

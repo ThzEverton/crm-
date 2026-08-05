@@ -1,0 +1,6 @@
+<div class="empty-state">
+  <span aria-hidden="true">◎</span>
+  <strong><%= title %></strong>
+  <p><%= message %></p>
+  <% if (typeof actionHref !== 'undefined') { %><a class="button button-secondary" href="<%= actionHref %>"><%= actionLabel %></a><% } %>
+</div>

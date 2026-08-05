@@ -1,0 +1,6 @@
+<div class="table-wrap">
+  <table>
+    <thead><tr><% headers.forEach((header) => { %><th scope="col"><%= header %></th><% }) %></tr></thead>
+    <tbody><% rows.forEach((row) => { %><tr><% row.forEach((cell) => { %><td><%= cell %></td><% }) %></tr><% }) %></tbody>
+  </table>
+</div>

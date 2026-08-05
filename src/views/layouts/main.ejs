@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <%- include('../partials/head', { pageTitle }) %>
+  </head>
+  <body class="<%= bodyClass ?? '' %>">
+    <a class="skip-link" href="#main-content">Pular para o conteúdo</a>
+    <div class="app-shell">
+      <%- include('../partials/sidebar', { activeNavigation }) %>
+      <div class="workspace">
+        <%- include('../partials/header', { pageTitle }) %>
+        <main id="main-content" class="content-area" tabindex="-1">
+          <%- body %>
+        </main>
+        <%- include('../partials/footer') %>
+      </div>
+    </div>
+    <div class="scrim" data-menu-close hidden></div>
+    <%- include('../partials/dialogs') %>
+    <script src="/js/app.js?v=2" defer></script>
+    <script src="/js/pwa.js?v=2" defer></script>
+  </body>
+</html>
