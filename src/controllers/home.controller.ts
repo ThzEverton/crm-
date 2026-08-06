@@ -72,7 +72,11 @@ export class HomeController {
   }
 
   patientApp = (request: Request, response: Response): void => {
-    const patient = this.patientService.list()[0]
+    const patients = this.patientService.list()
+    const patient = request.session.user?.role === 'patient'
+      ? patients.find((item) => item.id === request.session.user?.patientId)
+      : patients[0]
+    if (!patient) { response.status(404).render('errors/404', { pageTitle: 'Paciente não encontrado', activeNavigation: '', bodyClass: 'error-page' }); return }
     const plan = this.dietService.listPlans().find((item) => item.patientId === patient?.id && item.status === 'published')
     response.render('patient-app/index', {
       layout: false,

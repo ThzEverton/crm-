@@ -104,7 +104,7 @@ export function createApp(dependencies: AppDependencies = {}): Express {
   const operationsService = new OperationsService(localRepository)
   const settingsService = new SettingsService(localRepository)
   const patientAppService = new PatientAppService(localRepository)
-  const authService = new AuthService(patientService.list()[0]!.id)
+  const authService = new AuthService(() => patientService.list())
   app.use(createHealthRouter(new HealthController(healthService)))
   app.use(createWebRouter(
     new HomeController(patientService, assessmentService, dietService, operationsService, settingsService, patientAppService),

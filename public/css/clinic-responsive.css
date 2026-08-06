@@ -1,0 +1,41 @@
+/* Ajustes finais carregados após app.css para prontuários e comparações responsivas. */
+@media(max-width:620px){
+  .patient-dialog{width:100%;max-width:none;height:calc(100dvh - 6px);max-height:calc(100dvh - 6px);margin:auto 0 0;border-radius:18px 18px 0 0}
+  .patient-dialog>.patient-dialog-shell{height:100%;max-height:none;grid-template-rows:auto minmax(0,1fr) auto}
+  .patient-dialog .dialog-header{padding-top:17px;padding-bottom:15px}
+  .patient-dialog .dialog-body{padding-top:14px;padding-bottom:20px}
+  .patient-dialog .dialog-footer{padding-top:11px;padding-bottom:11px}
+  .patient-dialog-hero{padding:13px;grid-template-columns:42px minmax(0,1fr)}
+  .patient-dialog-hero>.patient-avatar{width:42px;height:42px}
+  .clinical-summary{margin-top:12px}
+  .clinical-summary>div{padding:11px}
+  .clinical-summary strong{font-size:15px}
+  .patient-data-list{margin-top:12px}
+  .patient-data-list>div{padding:10px}
+  .patient-notes{margin-top:12px;padding:12px}
+  .assessment-history{margin-top:14px}
+  .assessment-history>header{align-items:flex-start;gap:8px}
+  .assessment-history>header .button{padding:0 9px;white-space:nowrap}
+  .assessment-compare-controls{margin-top:9px!important;padding:10px!important;align-items:stretch;flex-direction:column;border:1px solid var(--line)!important}
+  .assessment-compare-controls button{width:100%;min-height:34px}
+  .assessment-comparison{padding:10px!important}
+  .assessment-comparison>header{gap:12px}
+  .assessment-comparison-grid{grid-template-columns:1fr;gap:6px}
+  .assessment-comparison-grid article{min-height:0;padding:9px;grid-template-columns:minmax(80px,.8fr) 1.2fr auto!important;align-items:center;gap:7px}
+  .assessment-comparison-grid article>small{font-size:7px}
+  .assessment-comparison-grid article>div{font-size:7px}
+  .assessment-comparison-grid article>strong{font-size:10px;text-align:right}
+  .assessment-comparison-grid progress{display:none}
+  .assessment-history>div:last-child{overflow:hidden}
+  .assessment-history article{min-height:62px;padding:8px;grid-template-columns:18px 65px 1fr 1fr!important;gap:7px}
+  .assessment-history article span:nth-of-type(3),.assessment-history article i{display:none}
+  .assessment-history article .assessment-details-button{grid-column:2/-1;width:max-content;margin-top:1px}
+  .patient-dialog .dialog-footer{gap:7px}
+  .patient-dialog .dialog-footer .button{min-height:40px;padding:0 12px}
+}
+
+@media(max-width:380px){
+  .patient-dialog .dialog-header,.patient-dialog .dialog-body,.patient-dialog .dialog-footer{padding-left:12px;padding-right:12px}
+  .patient-data-list{grid-template-columns:1fr 1fr}
+  .assessment-history>header strong{font-size:13px}
+}

@@ -10,9 +10,13 @@
   })
   installButtons.forEach((button) => {
     button.addEventListener('click', async () => {
-      if (!installPrompt) return
+      if (!installPrompt) {
+        const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent)
+        window.alert(isIos ? 'No Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.' : 'No menu do navegador, escolha “Instalar aplicativo” ou “Criar atalho” para colocar o CRM na área de trabalho.')
+        return
+      }
       installPrompt.prompt(); await installPrompt.userChoice; installPrompt = undefined
-      installButtons.forEach((item) => { item.hidden = true })
+      installButtons.forEach((item) => { item.textContent = '✓ Aplicativo instalado'; item.disabled = true })
     })
   })
 })()

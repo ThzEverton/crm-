@@ -1,0 +1,72 @@
+/* Portal do paciente: carregado depois do CSS geral para evitar regras do preview antigo. */
+.patient-shell{width:100%;min-height:100dvh;overflow:hidden;background:var(--paper)}
+.patient-preview-bar{width:100%;height:64px;padding:0 clamp(18px,3vw,48px);display:grid;grid-template-columns:38px minmax(0,1fr) auto;gap:12px;background:var(--surface)}
+.patient-header-actions{display:flex;align-items:center;gap:9px}
+.patient-stage{width:100%;height:calc(100dvh - 64px);padding:0;display:block;overflow:hidden;background:var(--paper)}
+.patient-app-live.phone-frame{width:100%;max-width:none;height:100%;max-height:none;display:grid;grid-template-columns:240px minmax(0,1fr);grid-template-rows:minmax(0,1fr);overflow:hidden;border:0;border-radius:0;background:var(--paper);box-shadow:none}
+.patient-app-live .phone-status{display:none}
+.patient-app-live .patient-nav{grid-column:1;grid-row:1;min-width:0;padding:32px 18px;display:flex;flex-direction:column;justify-content:flex-start;gap:8px;border:0;border-right:1px solid rgba(255,255,255,.08);background:var(--mineral-950)}
+.patient-app-live .patient-nav:before{content:'MEU CUIDADO';margin:0 13px 20px;color:#9bc9bb;font-size:8px;font-weight:900;letter-spacing:.14em}
+.patient-app-live .patient-nav a{width:100%;min-height:54px;padding:0 15px;display:flex;align-items:center;justify-content:flex-start;gap:12px;border-radius:11px;color:#bed2cb;font-size:10px;text-decoration:none}
+.patient-app-live .patient-nav a span{width:25px;font-size:18px;text-align:center}
+.patient-app-live .patient-nav a.active{color:var(--mineral-950);background:#fff}
+.patient-app-live .patient-content{grid-column:2;grid-row:1;width:100%;max-width:none;margin:0;padding:clamp(28px,4vw,58px) clamp(28px,5vw,76px) 64px;overflow-x:hidden;overflow-y:auto;background:var(--paper)}
+.patient-content:has(.patient-greeting){display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-content:start;gap:18px}
+.patient-content:has(.patient-greeting) .patient-greeting,.patient-content:has(.patient-greeting) .today-meals,.patient-content:has(.patient-greeting) .patient-feedback-button{grid-column:1/-1}
+.patient-content:has(.patient-greeting) .next-appointment-card,.patient-content:has(.patient-greeting) .water-card{margin-top:0}
+.patient-greeting h1,.patient-section-head h1{font-size:clamp(30px,3vw,43px)}
+.patient-metrics>span{min-height:116px;padding:22px}.patient-metrics strong{font-size:25px}
+.next-appointment-card,.water-card{min-height:116px;padding:22px}
+.today-meals{padding:20px 23px;border:1px solid var(--line);border-radius:15px;background:var(--surface)}
+.patient-meal-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.patient-meal-list article{min-width:0;padding:19px}
+.evolution-hero{min-height:150px;padding:25px}.evolution-grid span{padding:20px}.patient-info-card{padding:20px}
+.patient-profile-card,.patient-account-section{padding:20px}.patient-account-section>div,.patient-account-section>a{min-height:56px}
+.patient-portal-details{width:min(760px,calc(100vw - 32px));max-height:min(820px,calc(100dvh - 32px));margin:auto;border-radius:18px}
+.patient-portal-details::backdrop{background:rgba(13,35,29,.58);backdrop-filter:blur(3px)}
+.patient-portal-details .patient-dialog-shell{max-height:min(820px,calc(100dvh - 32px))}
+.patient-portal-details .dialog-body{overflow-y:auto}
+
+@media(max-width:1050px){
+  .patient-app-live.phone-frame{grid-template-columns:190px minmax(0,1fr)}
+  .patient-app-live .patient-nav{padding:24px 12px}
+  .patient-app-live .patient-content{padding:30px 28px 50px}
+  .patient-meal-list{grid-template-columns:1fr}
+  .patient-content:has(.patient-greeting){gap:13px}
+}
+
+@media(max-width:760px){
+  .patient-preview-bar{height:58px;padding:0 12px;grid-template-columns:34px minmax(0,1fr) auto}
+  .patient-preview-bar>div small{display:none}
+  .patient-header-actions{gap:6px}
+  .patient-header-actions .install-app-button{width:39px;padding:0;overflow:hidden;font-size:0}
+  .patient-header-actions .install-app-button:before{content:'▣';font-size:15px}
+  .patient-header-actions form .button{padding:0 10px}
+  .patient-stage{height:calc(100dvh - 58px)}
+  .patient-app-live.phone-frame{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) 64px}
+  .patient-app-live .patient-content{grid-column:1;grid-row:1;padding:22px 16px 32px}
+  .patient-app-live .patient-nav{grid-column:1;grid-row:2;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;border:0;border-top:1px solid var(--line);background:var(--surface)}
+  .patient-app-live .patient-nav:before{display:none}
+  .patient-app-live .patient-nav a{min-height:64px;padding:0;display:grid;place-items:center;align-content:center;gap:3px;border-radius:0;color:#89958f;font-size:8px}
+  .patient-app-live .patient-nav a span{width:auto;font-size:17px}
+  .patient-app-live .patient-nav a.active{color:var(--mineral-700);background:transparent}
+  .patient-content:has(.patient-greeting){display:block}
+  .patient-content:has(.patient-greeting)>*{margin-top:11px}
+  .patient-content:has(.patient-greeting) .patient-greeting{margin-top:0}
+  .patient-greeting h1,.patient-section-head h1{font-size:29px}
+  .patient-metrics>span{min-height:0;padding:14px}.patient-metrics strong{font-size:18px}
+  .next-appointment-card,.water-card{min-height:0;padding:15px}
+  .today-meals{padding:0;border:0;background:transparent}
+  .patient-meal-list{grid-template-columns:1fr;gap:10px}
+  .patient-portal-details{width:calc(100vw - 20px);max-height:calc(100dvh - 20px);margin:auto;border-radius:16px}
+  .patient-portal-details .patient-dialog-shell{max-height:calc(100dvh - 20px)}
+  .patient-friendly-macros,.patient-assessment-details-grid{grid-template-columns:1fr 1fr}
+}
+
+@media(max-width:390px){
+  .patient-app-live .patient-content{padding-left:12px;padding-right:12px}
+  .patient-preview-bar>div strong{font-size:10px}
+  .patient-header-actions form .button{font-size:8px}
+  .patient-evolution-history>button{grid-template-columns:75px 1fr}
+  .patient-evolution-history>button span:nth-of-type(2){display:none}
+}

@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head><%- include('../partials/head', { pageTitle }) %></head>
+  <head><%- include('../partials/head', { pageTitle }) %><link rel="stylesheet" href="/css/patient-app.css?v=1"></head>
   <body class="patient-shell" data-patient-theme>
     <a class="skip-link" href="#patient-content">Pular para o conteúdo</a>
-    <header class="patient-preview-bar"><a class="icon-button" href="<%= currentUser?.role === 'nutritionist' ? '/' : '/patient-app' %>" aria-label="Voltar">←</a><div><strong>Aplicativo do paciente</strong><small>Área pessoal de <%= patient?.fullName %></small></div><form method="post" action="/logout"><button class="button button-secondary" type="submit">Sair</button></form></header>
+    <header class="patient-preview-bar"><a class="icon-button" href="<%= currentUser?.role === 'nutritionist' ? '/' : '/patient-app' %>" aria-label="Voltar">←</a><div><strong>Meu acompanhamento</strong><small>Área pessoal de <%= patient?.fullName %></small></div><span class="patient-header-actions"><button class="button button-secondary install-app-button" type="button" data-install>▣ Instalar aplicativo</button><form method="post" action="/logout"><button class="button button-secondary" type="submit">Sair</button></form></span></header>
     <main id="patient-content" class="patient-stage">
       <section class="phone-frame patient-app-live" aria-label="Aplicativo do paciente">
         <div class="phone-status"><strong><%= new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) %></strong><button type="button" data-theme-toggle aria-label="Alternar tema">◐</button></div>
@@ -16,7 +16,7 @@
             <section class="today-meals"><header><div><small>DIETA DE HOJE</small><strong><%= patientState.completedMealIds.length %> de <%= plan?.meals.length ?? 0 %> concluídas</strong></div><a href="/patient-app?tab=diet">Ver dieta →</a></header><% plan?.meals.slice(0,3).forEach((meal) => { const done = patientState.completedMealIds.includes(meal.id); %><article class="<%= done ? 'done' : '' %>"><time><%= meal.scheduledTime %></time><span><strong><%= meal.name %></strong><small><%= meal.description %></small></span><b><%= done ? '✓' : '○' %></b></article><% }) %></section>
             <button class="patient-feedback-button" type="button" data-dialog-open="daily-feedback">Responder feedback diário <span>→</span></button>
           <% } else if (tab === 'diet') { %>
-            <header class="patient-section-head"><p class="eyebrow">PLANO PUBLICADO</p><h1>Minha dieta</h1><p><%= plan?.title %> · <%= plan?.kcalTarget %> kcal</p></header>
+            <header class="patient-section-head"><p class="eyebrow">PLANO PUBLICADO</p><h1>Minha dieta</h1><p><%= plan?.title %></p></header>
             <div class="patient-meal-list"><% plan?.meals.forEach((meal) => { const done = patientState.completedMealIds.includes(meal.id); %><article class="<%= done ? 'done' : '' %>"><header><time><%= meal.scheduledTime %></time><strong><%= meal.name %></strong><span><%= meal.kcal %> kcal</span></header><p><%= meal.description %></p><small><%= meal.proteinG %>g proteína · <%= meal.carbsG %>g carboidrato · <%= meal.fatG %>g gordura</small><form method="post" action="/patient-app/meals"><input type="hidden" name="mealId" value="<%= meal.id %>"><button type="submit"><%= done ? '✓ Refeição concluída' : 'Marcar como concluída' %></button></form></article><% }) %></div>
           <% } else if (tab === 'evolution') { %>
             <header class="patient-section-head"><p class="eyebrow">ACOMPANHAMENTO</p><h1>Minha evolução</h1><p>Indicadores publicados pelo seu nutricionista.</p></header>
@@ -27,7 +27,7 @@
             <header class="patient-section-head"><p class="eyebrow">MINHA CONTA</p><h1>Perfil e arquivos</h1><p><%= patient?.email %></p></header>
             <div class="patient-profile-card"><span class="patient-avatar green"><%= patient?.fullName.split(' ').slice(0,2).map((name) => name[0]).join('') %></span><div><strong><%= patient?.fullName %></strong><small><%= patient?.goal %></small></div></div>
             <section class="patient-account-section"><strong>Próximas consultas</strong><% appointments.forEach((item) => { %><div><span><%= item.date.split('-').reverse().join('/') %> · <%= item.time %></span><small><%= item.type %></small></div><% }) %></section>
-            <section class="patient-account-section"><strong>Financeiro</strong><% payments.forEach((item) => { %><div><span><%= (item.amountCents / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) %></span><small><%= item.status === 'paid' ? 'Pago' : 'Pendente' %> · vence <%= item.dueDate.split('-').reverse().join('/') %></small></div><% }) %></section>
+            <section class="patient-account-section patient-finance-private"><strong>Financeiro</strong><% payments.forEach((item) => { %><div><span><%= item.plan %></span><small><%= item.status === 'paid' ? 'Pagamento confirmado' : 'Situação pendente' %> · vencimento <%= item.dueDate.split('-').reverse().join('/') %></small></div><% }) %></section>
             <section class="patient-account-section"><strong>Documentos</strong><% documents.forEach((item) => { %><a href="/documents/<%= item.id %>/download"><span><%= item.title %></span><small>Baixar arquivo ↓</small></a><% }) %></section>
           <% } %>
         </div>

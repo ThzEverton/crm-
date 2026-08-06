@@ -24,6 +24,7 @@ export function createWebRouter(controller: HomeController, patientController: P
   router.post('/patient-app/water', patientAppController.addWater)
   router.post('/patient-app/meals', patientAppController.toggleMeal)
   router.post('/patient-app/feedback', patientAppController.feedback)
+  router.get('/api/patient-app/details', patientAppController.details)
   router.get('/documents/:id/download', operationsController.downloadDocument)
   router.use(requireNutritionist)
   router.get('/diets/:id/print', controller.printPlan)

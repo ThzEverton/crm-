@@ -450,7 +450,6 @@
     }
     assessments.forEach((item) => item.checkbox.addEventListener('change', () => { const selected = assessments.filter((entry) => entry.checkbox.checked); if (selected.length > 2) selected[0].checkbox.checked = false; renderComparison() }))
     controls.querySelector('button').addEventListener('click', () => { assessments.forEach((item, index) => { item.checkbox.checked = index < 2 }); renderComparison() })
-    if (assessments.length >= 2) { assessments[0].checkbox.checked = true; assessments[1].checkbox.checked = true; renderComparison() }
     const patientId = history.closest('.patient-dialog')?.id.replace('patient-', '')
     if (patientId) fetch(`/api/patients/${patientId}/assessments`).then((response) => response.json()).then(({ assessments: fullAssessments }) => {
       const labels = { weightKg: ['Peso', 'kg'], heightCm: ['Altura', 'cm'], bmi: ['IMC', ''], bodyFatPercent: ['Gordura corporal', '%'], fatMassKg: ['Massa gorda', 'kg'], leanMassKg: ['Massa magra', 'kg'], bodyDensity: ['Densidade corporal', ''], waterPercent: ['Água corporal', '%'], muscleMassKg: ['Massa muscular', 'kg'], boneMassKg: ['Massa óssea', 'kg'], waistCm: ['Cintura', 'cm'], hipCm: ['Quadril', 'cm'], armCm: ['Braço', 'cm'] }
@@ -476,6 +475,51 @@
       renderComparison()
     }).catch(() => {})
   })
+  const patientPortal = document.querySelector('.patient-app-live')
+  if (patientPortal) {
+    const openPatientDetails = (title, eyebrow, sections) => {
+      const dialog = document.createElement('dialog'); dialog.className = 'app-dialog patient-portal-details'
+      const shell = document.createElement('div'); shell.className = 'patient-dialog-shell'; shell.innerHTML = `<header class="dialog-header"><div><p class="eyebrow"></p><h2></h2></div><button class="dialog-close" type="button">×</button></header><div class="dialog-body"></div><footer class="dialog-footer"><button class="button button-primary" type="button">Fechar</button></footer>`
+      shell.querySelector('.eyebrow').textContent = eyebrow; shell.querySelector('h2').textContent = title; const body = shell.querySelector('.dialog-body')
+      sections.forEach(({ heading, content }) => { const section = document.createElement('section'); section.className = 'patient-detail-section'; const h3 = document.createElement('h3'); h3.textContent = heading; section.append(h3); if (typeof content === 'string') { const p = document.createElement('p'); p.textContent = content; section.append(p) } else section.append(content); body.append(section) })
+      dialog.append(shell); document.body.append(dialog); const close = () => { dialog.close(); dialog.remove() }; shell.querySelector('.dialog-close').addEventListener('click', close); shell.querySelector('footer button').addEventListener('click', close); dialog.addEventListener('cancel', (event) => { event.preventDefault(); close() }); dialog.showModal()
+    }
+    const dietSubtitle = patientPortal.querySelector('.patient-section-head p:last-child')
+    if (patientPortal.querySelector('.patient-meal-list') && dietSubtitle) dietSubtitle.textContent = dietSubtitle.textContent.split('·')[0].trim()
+    const financeSection = [...patientPortal.querySelectorAll('.patient-account-section')].find((section) => section.querySelector(':scope > strong')?.textContent.trim() === 'Financeiro')
+    if (financeSection) { financeSection.classList.add('patient-finance-private'); financeSection.querySelectorAll(':scope > div > span').forEach((span) => { span.textContent = 'Situação do acompanhamento' }) }
+    fetch('/api/patient-app/details').then((response) => response.json()).then((details) => {
+      const mealCards = patientPortal.querySelectorAll('.patient-meal-list > article')
+      mealCards.forEach((card, index) => {
+        const meal = details.plan?.meals[index]; if (!meal) return
+        const button = document.createElement('button'); button.type = 'button'; button.className = 'patient-meal-details-button'; button.textContent = 'Ver alimentos e opções'
+        button.addEventListener('click', () => {
+          const optionIds = [...new Set(meal.items.map((item) => item.optionId || 'option-1'))]
+          const options = document.createElement('div'); options.className = 'patient-food-options'
+          if (!meal.items.length) { const p = document.createElement('p'); p.textContent = meal.description; options.append(p) }
+          optionIds.forEach((optionId, optionIndex) => {
+            const option = document.createElement('article'); const heading = document.createElement('strong'); heading.textContent = optionIds.length > 1 ? `Opção ${optionIndex + 1}` : 'Composição da refeição'; option.append(heading)
+            const optionItems = meal.items.filter((item) => (item.optionId || 'option-1') === optionId); const groups = [...new Set(optionItems.map((item) => item.choiceGroupId || item.foodId))]
+            groups.forEach((groupId) => { const group = document.createElement('div'); optionItems.filter((item) => (item.choiceGroupId || item.foodId) === groupId).forEach((item, itemIndex) => { if (itemIndex) { const or = document.createElement('b'); or.textContent = 'OU'; group.append(or) }; const span = document.createElement('span'); const quantity = item.displayQuantity && item.displayUnit ? `${item.displayQuantity} ${item.displayQuantity === 1 ? item.displayUnit : `${item.displayUnit}s`}` : `${item.quantityGrams} g`; span.textContent = `${quantity} — ${item.name}`; group.append(span) }); option.append(group) }); options.append(option)
+          })
+          const sections = [{ heading: 'O que consumir', content: options }]
+          if (meal.notes) sections.push({ heading: 'Orientações e substituições', content: meal.notes })
+          const macros = document.createElement('div'); macros.className = 'patient-friendly-macros'; [['Proteína', meal.proteinG, 'g'], ['Carboidratos', meal.carbsG, 'g'], ['Gorduras', meal.fatG, 'g'], ['Fibras', meal.fiberG, 'g']].forEach(([label, value, unit]) => { const span = document.createElement('span'); span.innerHTML = `<small>${label}</small><strong>${value} ${unit}</strong>`; macros.append(span) }); sections.push({ heading: 'Informações nutricionais da refeição', content: macros })
+          openPatientDetails(`${meal.scheduledTime} · ${meal.name}`, 'DETALHES DA REFEIÇÃO', sections)
+        })
+        card.querySelector('form')?.before(button)
+      })
+      const evolutionInfo = patientPortal.querySelector('.evolution-grid')
+      if (evolutionInfo && details.assessments?.length) {
+        const history = document.createElement('section'); history.className = 'patient-evolution-history'; const heading = document.createElement('header'); heading.innerHTML = '<div><small>HISTÓRICO</small><strong>Minhas avaliações</strong></div><span>Toque para ver detalhes</span>'; history.append(heading)
+        details.assessments.forEach((assessment, index) => {
+          const row = document.createElement('button'); row.type = 'button'; row.innerHTML = `<time>${assessment.assessedOn.split('-').reverse().join('/')}</time><span><small>Peso</small><strong>${Number(assessment.weightKg).toLocaleString('pt-BR')} kg</strong></span><span><small>Gordura</small><strong>${assessment.bodyFatPercent === null ? '—' : `${Number(assessment.bodyFatPercent).toLocaleString('pt-BR')}%`}</strong></span><b>${index === 0 ? 'Mais recente' : 'Ver detalhes'} →</b>`
+          row.addEventListener('click', () => { const values = document.createElement('div'); values.className = 'patient-assessment-details-grid'; const fields = [['Peso', assessment.weightKg, 'kg'], ['IMC', assessment.bmi, ''], ['Gordura corporal', assessment.bodyFatPercent, '%'], ['Massa gorda', assessment.fatMassKg, 'kg'], ['Massa magra', assessment.leanMassKg, 'kg'], ['Água corporal', assessment.waterPercent, '%'], ['Massa muscular', assessment.muscleMassKg, 'kg'], ['Cintura', assessment.waistCm, 'cm'], ['Quadril', assessment.hipCm, 'cm']]; fields.forEach(([label, value, unit]) => { if (value === null || value === undefined) return; const span = document.createElement('span'); const small = document.createElement('small'); const strong = document.createElement('strong'); small.textContent = label; strong.textContent = `${Number(value).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}${unit ? ` ${unit}` : ''}`; span.append(small, strong); values.append(span) }); openPatientDetails(`Avaliação de ${assessment.assessedOn.split('-').reverse().join('/')}`, 'MINHA EVOLUÇÃO', [{ heading: 'Resultados publicados', content: values }, { heading: 'Observações do nutricionista', content: assessment.notes || 'Nenhuma observação publicada.' }]) }); history.append(row)
+        }); evolutionInfo.after(history)
+      }
+      if (financeSection) financeSection.querySelectorAll(':scope > div').forEach((row, index) => { const payment = details.payments?.[index]; if (!payment) return; row.querySelector('span').textContent = payment.plan; row.querySelector('small').textContent = `${payment.status === 'paid' ? 'Pagamento confirmado' : 'Situação pendente'} · vencimento ${payment.dueDate.split('-').reverse().join('/')}` })
+    }).catch(() => {})
+  }
 
   const patientShell = document.querySelector('[data-patient-theme]')
   const themeButton = document.querySelector('[data-theme-toggle]')
