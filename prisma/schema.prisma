@@ -46,11 +46,6 @@ enum DocumentStatus {
   ARCHIVED
 }
 
-enum MessageAuthor {
-  NUTRITIONIST
-  PATIENT
-}
-
 enum FileStatus {
   PENDING
   AVAILABLE
@@ -72,7 +67,6 @@ model User {
   resetTokens  PasswordResetToken[]
   auditEvents  AuditLog[]
   documents    Document[]           @relation("DocumentCreator")
-  messages     Message[]            @relation("MessageSender")
 
   @@map("users")
 }
@@ -135,7 +129,6 @@ model Patient {
   feedbacks        Feedback[]
   appointments     Appointment[]
   payments         Payment[]
-  conversation     Conversation?
   files            FileAsset[]
   documents        Document[]
   consents         Consent[]
@@ -296,33 +289,6 @@ model Payment {
   @@map("payments")
 }
 
-model Conversation {
-  id        String    @id @default(uuid()) @db.Uuid
-  patientId String    @unique @map("patient_id") @db.Uuid
-  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz
-  patient   Patient   @relation(fields: [patientId], references: [id], onDelete: Restrict)
-  messages  Message[]
-
-  @@map("conversations")
-}
-
-model Message {
-  id             String        @id @default(uuid()) @db.Uuid
-  conversationId String        @map("conversation_id") @db.Uuid
-  senderUserId   String        @map("sender_user_id") @db.Uuid
-  author         MessageAuthor
-  body           String
-  attachmentId   String?       @map("attachment_id") @db.Uuid
-  readAt         DateTime?     @map("read_at") @db.Timestamptz
-  sentAt         DateTime      @default(now()) @map("sent_at") @db.Timestamptz
-  conversation   Conversation  @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-  sender         User          @relation("MessageSender", fields: [senderUserId], references: [id], onDelete: Restrict)
-  attachment     FileAsset?    @relation("MessageAttachment", fields: [attachmentId], references: [id], onDelete: SetNull)
-
-  @@index([conversationId, sentAt])
-  @@map("messages")
-}
-
 model FileAsset {
   id                 String     @id @default(uuid()) @db.Uuid
   patientId          String?    @map("patient_id") @db.Uuid
@@ -338,7 +304,6 @@ model FileAsset {
   deletedAt          DateTime?  @map("deleted_at") @db.Timestamptz
   patient            Patient?   @relation(fields: [patientId], references: [id], onDelete: Restrict)
   documents          Document[]
-  messageAttachments Message[]  @relation("MessageAttachment")
 
   @@index([patientId, category])
   @@map("file_assets")

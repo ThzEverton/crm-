@@ -13,8 +13,25 @@ export class DietController {
     catch (error) { if (error instanceof ZodError) { response.redirect('/foods?error=Revise os dados do alimento.'); return } throw error }
   }
   addMeal = (request: Request, response: Response): void => {
-    try { this.service.addMeal(request.body); response.redirect('/diets?notice=meal-created') }
+    try { const editing = Boolean(request.body.mealId); this.service.addMeal(request.body); response.redirect(`/diets?notice=${editing ? 'meal-updated' : 'meal-created'}`) }
     catch (error) { if (error instanceof ZodError) { response.redirect('/diets?error=Revise os dados da refeição.'); return } throw error }
+  }
+  duplicatePlan = (request: Request, response: Response, next: NextFunction): void => {
+    try {
+      const id = String(request.params.id ?? '')
+      if (!this.service.duplicatePlan(id, request.body)) { next(); return }
+      response.redirect('/diets?notice=plan-duplicated')
+    } catch (error) { if (error instanceof ZodError) { response.redirect('/diets?error=Revise os dados da cópia.'); return } throw error }
+  }
+  searchFoods = async (request: Request, response: Response): Promise<void> => {
+    const foods = await this.service.searchFoods(request.query.q)
+    response.json({ foods })
+  }
+  deleteMeal = (request: Request, response: Response, next: NextFunction): void => {
+    const planId = String(request.params.planId ?? '')
+    const mealId = String(request.params.mealId ?? '')
+    if (!this.service.deleteMeal(planId, mealId)) { next(); return }
+    response.redirect('/diets?notice=meal-deleted')
   }
   publish = (request: Request, response: Response, next: NextFunction): void => {
     const rawId = request.params.id; const id = Array.isArray(rawId) ? rawId[0] ?? '' : rawId ?? ''

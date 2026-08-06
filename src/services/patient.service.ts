@@ -7,6 +7,8 @@ export class PatientService {
   list() {
     return this.repository.listPatients()
   }
+  find(id: string) { return this.repository.findPatient(id) }
+  assessments(id: string) { return this.repository.findPatient(id) ? this.repository.listAssessments(id) : undefined }
 
   create(payload: unknown) {
     const input = createPatientSchema.parse(payload)

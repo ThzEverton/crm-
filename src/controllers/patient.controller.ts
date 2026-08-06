@@ -29,4 +29,10 @@ export class PatientController {
     }
     response.redirect(`/patients?notice=status&patient=${encodeURIComponent(patient.fullName)}`)
   }
+  assessments = (request: Request, response: Response, next: NextFunction): void => {
+    const id = String(request.params.id ?? '')
+    const assessments = this.service.assessments(id)
+    if (!assessments) { next(); return }
+    response.json({ assessments })
+  }
 }

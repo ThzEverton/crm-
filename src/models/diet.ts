@@ -9,6 +9,8 @@ export type FoodItem = {
   fatG: number
   fiberG: number
   reviewed: boolean
+  unitLabel?: string
+  unitGrams?: number
 }
 
 export type Meal = {
@@ -34,6 +36,10 @@ export type MealFoodItem = {
   carbsG: number
   fatG: number
   fiberG: number
+  displayQuantity?: number
+  displayUnit?: string
+  optionId?: string
+  choiceGroupId?: string
 }
 
 export type MealPlan = {
@@ -45,6 +51,8 @@ export type MealPlan = {
   endsOn: string
   kcalTarget: number
   proteinTargetG: number
+  generalGuidelines?: string
+  specialInstructions?: string
   status: 'draft' | 'published'
   version: number
   meals: Meal[]

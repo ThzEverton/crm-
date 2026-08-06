@@ -14,7 +14,6 @@ import { PatientController } from './controllers/patient.controller.js'
 import { AssessmentController } from './controllers/assessment.controller.js'
 import { DietController } from './controllers/diet.controller.js'
 import { OperationsController } from './controllers/operations.controller.js'
-import { MessageController } from './controllers/message.controller.js'
 import { SettingsController } from './controllers/settings.controller.js'
 import { PatientAppController } from './controllers/patient-app.controller.js'
 import { AuthController } from './controllers/auth.controller.js'
@@ -30,7 +29,6 @@ import { PatientService } from './services/patient.service.js'
 import { AssessmentService } from './services/assessment.service.js'
 import { DietService } from './services/diet.service.js'
 import { OperationsService } from './services/operations.service.js'
-import { MessageService } from './services/message.service.js'
 import { SettingsService } from './services/settings.service.js'
 import { PatientAppService } from './services/patient-app.service.js'
 import { AuthService } from './services/auth.service.js'
@@ -104,18 +102,16 @@ export function createApp(dependencies: AppDependencies = {}): Express {
   const assessmentService = new AssessmentService(localRepository)
   const dietService = new DietService(localRepository)
   const operationsService = new OperationsService(localRepository)
-  const messageService = new MessageService(localRepository)
   const settingsService = new SettingsService(localRepository)
   const patientAppService = new PatientAppService(localRepository)
   const authService = new AuthService(patientService.list()[0]!.id)
   app.use(createHealthRouter(new HealthController(healthService)))
   app.use(createWebRouter(
-    new HomeController(patientService, assessmentService, dietService, operationsService, messageService, settingsService, patientAppService),
+    new HomeController(patientService, assessmentService, dietService, operationsService, settingsService, patientAppService),
     new PatientController(patientService),
     new AssessmentController(assessmentService),
     new DietController(dietService),
     new OperationsController(operationsService),
-    new MessageController(messageService),
     new SettingsController(settingsService),
     new PatientAppController(patientAppService),
     new AuthController(authService),

@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title><%= pageTitle %></title>
+  <style>
+    :root{font-family:Arial,sans-serif;color:#17231f}*{box-sizing:border-box}body{margin:0;background:#eef2ef}.actions{position:sticky;top:0;padding:12px;display:flex;justify-content:center;gap:8px;background:#173f35}.actions button,.actions a{padding:10px 16px;border:0;border-radius:7px;color:#173f35;background:#fff;font-weight:700;text-decoration:none;cursor:pointer}.page{width:210mm;min-height:297mm;margin:18px auto;padding:18mm;background:#fff;box-shadow:0 3px 18px #0002}header{padding-bottom:14px;border-bottom:3px solid #176f5b}header small{color:#176f5b;font-weight:800}h1{margin:7px 0 3px;font-size:25px}header p{margin:0;color:#65736e}.meta{margin:18px 0;display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #ccd7d2}.meta span{padding:10px;border-right:1px solid #ccd7d2}.meta span:last-child{border:0}.meta small{display:block;color:#71807a;font-size:9px}.meta b{font-size:11px}.section{margin-top:20px}.section h2{margin:0 0 9px;color:#176f5b;font-size:15px;text-transform:uppercase}.guidelines{margin:0;padding-left:19px}.guidelines li{margin:6px 0;line-height:1.4}.meal{margin:0 0 16px;padding:13px;border-left:4px solid #78b8a4;background:#f6faf8;break-inside:avoid}.meal>header{padding:0;display:flex;justify-content:space-between;border:0}.meal h3{margin:0;font-size:14px}.meal time{font-weight:800}.meal ul{margin:10px 0 0;padding-left:18px}.meal li{margin:5px 0;line-height:1.4}.meal .macros{margin-top:9px;color:#567168;font-size:10px}.special{padding:14px;white-space:pre-line;border:1px solid #d4dfda;background:#fffdf5}.assessment{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid #ccd7d2}.assessment span{padding:10px}.assessment small{display:block;color:#71807a;font-size:8px}.assessment b{font-size:11px}@page{size:A4;margin:12mm}@media print{body{background:#fff}.actions{display:none}.page{width:auto;min-height:0;margin:0;padding:0;box-shadow:none}}
+  </style>
+</head>
+<body>
+  <nav class="actions"><button onclick="window.print()">Salvar como PDF / Imprimir</button><a href="/diets">Voltar ao plano</a></nav>
+  <main class="page">
+    <header><small>NUTRICIONISTA</small><h1><%= settings.name %></h1><p><%= settings.crn %> · <%= settings.email %> · <%= settings.phone %></p></header>
+    <h1>Plano alimentar · <%= patient?.fullName %></h1>
+    <div class="meta"><span><small>OBJETIVO</small><b><%= plan.goal %></b></span><span><small>PERÍODO</small><b><%= plan.startsOn.split('-').reverse().join('/') %> — <%= plan.endsOn.split('-').reverse().join('/') %></b></span><span><small>META</small><b><%= plan.kcalTarget %> kcal</b></span></div>
+    <% if (plan.generalGuidelines) { %><section class="section"><h2>Orientações gerais</h2><ul class="guidelines"><% plan.generalGuidelines.split('\n').filter(Boolean).forEach((line) => { %><li><%= line.replace(/^[-•]\s*/, '') %></li><% }) %></ul></section><% } %>
+    <section class="section"><h2>Plano alimentar</h2><% plan.meals.forEach((meal, index) => { %><article class="meal"><header><h3>Refeição <%= index + 1 %> · <%= meal.name %></h3><time><%= meal.scheduledTime %></time></header><ul><% meal.items.forEach((item) => { %><li><%= item.displayQuantity && item.displayUnit ? `${item.displayQuantity} ${item.displayQuantity === 1 ? item.displayUnit : item.displayUnit + 's'}` : `${item.quantityGrams} g` %> — <%= item.name %></li><% }) %></ul><% if (meal.notes) { %><div class="special"><%= meal.notes %></div><% } %><div class="macros"><%= meal.kcal %> kcal · <%= meal.proteinG %> g proteína · <%= meal.carbsG %> g carboidrato · <%= meal.fatG %> g gordura</div></article><% }) %></section>
+    <% if (plan.specialInstructions) { %><section class="section"><h2>Situações especiais e refeições livres</h2><div class="special"><%= plan.specialInstructions %></div></section><% } %>
+    <% if (assessment) { %><section class="section"><h2>Como está o seu corpo · <%= assessment.assessedOn.split('-').reverse().join('/') %></h2><div class="assessment"><span><small>PESO</small><b><%= assessment.weightKg %> kg</b></span><span><small>IMC</small><b><%= assessment.bmi %></b></span><span><small>GORDURA</small><b><%= assessment.bodyFatPercent ?? '—' %>%</b></span><span><small>MASSA MAGRA</small><b><%= assessment.leanMassKg ?? '—' %> kg</b></span></div></section><% } %>
+  </main>
+</body>
+</html>

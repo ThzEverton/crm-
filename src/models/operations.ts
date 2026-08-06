@@ -1,5 +1,5 @@
 export type AppointmentStatus = 'scheduled' | 'confirmed' | 'completed' | 'cancelled' | 'no_show'
-export type Appointment = { id: string; patientId: string; date: string; time: string; durationMinutes: number; mode: 'online' | 'in_person'; type: string; status: AppointmentStatus; notes: string; createdAt: Date }
+export type Appointment = { id: string; patientId: string; date: string; time: string; durationMinutes: number; mode: 'online' | 'in_person'; type: string; status: AppointmentStatus; notes: string; onlineLink?: string; reminderEnabled?: boolean; reminderHours?: number; createdAt: Date }
 export type CreateAppointmentInput = Omit<Appointment, 'id' | 'status' | 'createdAt'>
 
 export type PaymentStatus = 'pending' | 'paid' | 'overdue' | 'cancelled' | 'refunded'

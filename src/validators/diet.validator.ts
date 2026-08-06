@@ -3,15 +3,26 @@ import { z } from 'zod'
 export const createMealPlanSchema = z.object({
   patientId: z.string().uuid(), title: z.string().trim().min(3), goal: z.string().trim().min(3),
   startsOn: z.string().min(1), endsOn: z.string().min(1), kcalTarget: z.coerce.number().int().min(500).max(10_000), proteinTargetG: z.coerce.number().min(0).max(1_000),
+  generalGuidelines: z.string().trim().max(10_000).default(''), specialInstructions: z.string().trim().max(10_000).default(''),
+})
+
+export const duplicateMealPlanSchema = z.object({
+  patientId: z.string().uuid(),
+  title: z.string().trim().min(3).max(160),
+  startsOn: z.string().min(1),
+  endsOn: z.string().min(1),
 })
 
 const mealFoodSelectionSchema = z.array(z.object({
   foodId: z.string().uuid(),
   quantityGrams: z.coerce.number().positive().max(5_000),
-})).min(1, 'Adicione pelo menos um alimento.')
+  optionId: z.string().trim().min(1).max(80).optional(),
+  choiceGroupId: z.string().trim().min(1).max(80).optional(),
+}))
 
 export const createMealSchema = z.object({
   planId: z.string().uuid(),
+  mealId: z.string().uuid().optional().or(z.literal('')).transform((value) => value || undefined),
   name: z.string().trim().min(2),
   scheduledTime: z.string().min(1),
   notes: z.string().trim().max(2_000).default(''),
