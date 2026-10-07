@@ -56,5 +56,6 @@
     "esbuild@0.25.12": true,
     "@prisma/engines@7.9.1": true,
     "prisma@7.9.1": true
-  }
+  },
+  "description": "CRM para nutricionista com TypeScript, Express, Prisma e PostgreSQL."
 }
