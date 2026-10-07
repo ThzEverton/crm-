@@ -1,46 +1,69 @@
 # CRM Nutricionista
 
-Fundação do sistema comercial para um único nutricionista. A Fase 1 usa Node.js, TypeScript, Express, EJS, Prisma e PostgreSQL. Autenticação e entidades clínicas ainda não fazem parte desta versão.
+Sistema comercial para organizar a operação de um nutricionista, desenvolvido com foco em **arquitetura em camadas, qualidade de código e evolução segura do produto**.
 
-## Requisitos
+> Status atual: **Fase 1** — fundação técnica, persistência, estrutura web e preparação para as próximas entidades do domínio.
 
-- Node.js 22 ou superior (Node 24 recomendado)
-- PostgreSQL 15 ou superior
+## Stack
 
-## Execução local
-
-```powershell
-Copy-Item .env.example .env
-npm.cmd install
-npm.cmd run db:migrate
-npm.cmd run dev
-```
-
-Abra `http://localhost:3000`. As rotas de operação são:
-
-- `GET /health`: processo HTTP ativo, usado pelo Render.
-- `GET /ready`: testa a conexão com o PostgreSQL.
-- `GET /patient-app`: casca instalável da PWA.
-
-## Validação
-
-```powershell
-npm.cmd run check
-npm.cmd run test:e2e
-```
-
-`check` compila o TypeScript, executa os testes e audita dependências de produção. `test:e2e` abre Chrome em viewports desktop/mobile e verifica console, navegação e overflow. `npm run prisma:validate` valida o schema pelo CLI do Prisma; esse comando precisa alcançar o host oficial de engines do Prisma.
+- Node.js 22+
+- TypeScript
+- Express 5
+- EJS
+- Prisma ORM
+- PostgreSQL
+- Zod
+- Vitest
+- Playwright Core
+- Render
 
 ## Arquitetura
 
-- `routes` recebem requisições;
-- `controllers` coordenam respostas;
-- `services` concentram regras de aplicação;
-- `repositories` isolam o Prisma;
-- `views` e `partials` renderizam a interface EJS;
-- `middlewares` cuidam do ciclo HTTP;
-- `public` contém somente a estrutura pública da PWA.
+```text
+Routes
+  ↓
+Controllers
+  ↓
+Services
+  ↓
+Repositories
+  ↓
+Prisma / PostgreSQL
+```
 
-O protótipo React/Vite anterior foi preservado em `prototype/legacy-vite` apenas como referência. Ele não participa do build nem do runtime.
+Além da camada de aplicação, o projeto possui `views`, `partials`, middlewares e uma estrutura pública preparada para PWA.
 
-Consulte [docs/PHASE-1.md](docs/PHASE-1.md) para critérios de aceite e [docs/DEPLOY.md](docs/DEPLOY.md) para o Render, backup e recuperação.
+## Qualidade e validação
+
+- Build TypeScript antes da publicação.
+- Testes automatizados com Vitest.
+- Smoke tests E2E em desktop e mobile.
+- Auditoria das dependências de produção.
+- Endpoints separados de health check e readiness.
+
+```bash
+npm run check
+npm run test:e2e
+```
+
+## Executando localmente
+
+```bash
+cp .env.example .env
+npm install
+npm run db:migrate
+npm run dev
+```
+
+Rotas úteis:
+
+- `GET /health` — processo HTTP ativo.
+- `GET /ready` — valida conexão com PostgreSQL.
+- `GET /patient-app` — estrutura pública da PWA.
+
+## Documentação
+
+- [`docs/PHASE-1.md`](./docs/PHASE-1.md) — escopo e critérios de aceite.
+- [`docs/DEPLOY.md`](./docs/DEPLOY.md) — deploy, backup e recuperação.
+
+O protótipo React/Vite anterior foi preservado em `prototype/legacy-vite` apenas como referência e não participa do runtime atual.
